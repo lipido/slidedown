@@ -1,5 +1,11 @@
-# Dependencias de build (no se usan, pero por si acaso)
+# Dependencias de desarrollo (node/playwright)
 node_modules/
+package-lock.json
+
+# Artefactos de la suite de tests
+test/screenshots/
+playwright-report/
+test-results/
 
 # Logs y temporales
 *.log

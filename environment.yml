@@ -1,0 +1,17 @@
+# Entorno de desarrollo de slidedown.
+#
+# Reproducible con conda:
+#   conda env create -f environment.yml
+#   conda activate slidedown
+#   npm install
+#   npx playwright install chromium
+#   npm test
+#
+# NOTA: nodejs viene de conda-forge. Playwright se instala por npm
+# (package.json) y su navegador Chromium con `npx playwright install`.
+
+name: slidedown
+channels:
+  - conda-forge
+dependencies:
+  - nodejs=22

@@ -1,0 +1,13 @@
+{
+  "name": "slidedown",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Framework de presentaciones en Markdown (cero build). Suite de verificación con Playwright.",
+  "type": "module",
+  "scripts": {
+    "test": "node test/verify.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.62.0"
+  }
+}
