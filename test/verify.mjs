@@ -163,7 +163,18 @@ async function inspectSlide(page, idx, total) {
         const onEdgeEnd = end.x <= rb.x + TOL || end.x >= rb.x + rb.w - TOL || end.y <= rb.y + TOL || end.y >= rb.y + rb.h - TOL;
         const distStart = Math.hypot(start.x - cxA, start.y - cyA);
         const distEnd = Math.hypot(end.x - cxB, end.y - cyB);
-        geom = { onEdgeStart, onEdgeEnd, distStart, distEnd };
+        // Orientación de la punta: la tangente final (end - c2) debe apuntar en
+        // la misma dirección que el vector centro-origen -> centro-destino,
+        // para que la punta no quede invertida.
+        const c2x = nums[n - 4], c2y = nums[n - 3];
+        const tEndX = end.x - c2x, tEndY = end.y - c2y;
+        const dirX = cxB - cxA, dirY = cyB - cyA;
+        // producto escalar normalizado > 0 => misma dirección
+        const dot = tEndX * dirX + tEndY * dirY;
+        geom = {
+          onEdgeStart, onEdgeEnd, distStart, distEnd,
+          tipPointsForward: dot > 0
+        };
       }
       results.arrows.push({
         from: a.dataset.from,
@@ -226,6 +237,7 @@ async function inspectSlide(page, idx, total) {
       check(a.geom.onEdgeEnd, name + ' — flecha llega al borde', `${a.to} (d=${a.geom.distEnd.toFixed(0)})`);
       check(a.geom.distStart > 10, name + ' — flecha no sale del centro', `${a.from} d=${a.geom.distStart.toFixed(0)}`);
       check(a.geom.distEnd > 10, name + ' — flecha no llega al centro', `${a.to} d=${a.geom.distEnd.toFixed(0)}`);
+      check(a.geom.tipPointsForward, name + ' — punta bien orientada', `${a.from}→${a.to}`);
     }
   }
   check(r.mermaid.ok, name + ' — mermaid renderizado', r.mermaid.count ? `${r.mermaid.count} diagrama(s)` : '');
