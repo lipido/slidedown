@@ -149,31 +149,45 @@ async function inspectSlide(page, idx, total) {
         const start = { x: nums[0], y: nums[1] };
         const n = nums.length;
         const end = { x: nums[n - 2], y: nums[n - 1] };
-        const rectOf = (el) => {
-          const r2 = el.getBoundingClientRect();
-          const sr = s.getBoundingClientRect();
-          return { x: r2.left - sr.left, y: r2.top - sr.top, w: r2.width, h: r2.height };
-        };
-        const ra = rectOf(from), rb = rectOf(to);
-        const cxA = ra.x + ra.w / 2, cyA = ra.y + ra.h / 2;
-        const cxB = rb.x + rb.w / 2, cyB = rb.y + rb.h / 2;
-        // tolerancia: la subdivisión aproxima el borde con un margen
-        const TOL = 30;
-        const onEdgeStart = start.x <= ra.x + TOL || start.x >= ra.x + ra.w - TOL || start.y <= ra.y + TOL || start.y >= ra.y + ra.h - TOL;
-        const onEdgeEnd = end.x <= rb.x + TOL || end.x >= rb.x + rb.w - TOL || end.y <= rb.y + TOL || end.y >= rb.y + rb.h - TOL;
-        const distStart = Math.hypot(start.x - cxA, start.y - cyA);
-        const distEnd = Math.hypot(end.x - cxB, end.y - cyB);
-        // Orientación de la punta: la tangente final (end - c2) debe apuntar en
-        // la misma dirección que el vector centro-origen -> centro-destino,
-        // para que la punta no quede invertida.
+        // El SVG de la flecha cubre su contenedor de referencia (slide o
+        // canvas). Las coordenadas del path son relativas a ese contenedor.
+        // Para verificar que la flecha coincide con la caja en pantalla,
+        // traducimos a coordenadas absolutas: rect del SVG + path.
+        const svgRect = a.querySelector('svg').getBoundingClientRect();
+        const startAbs = { x: svgRect.left + start.x, y: svgRect.top + start.y };
+        const endAbs = { x: svgRect.left + end.x, y: svgRect.top + end.y };
+        // rect absoluto de las cajas (en pantalla)
+        const raAbs = from.getBoundingClientRect();
+        const rbAbs = to.getBoundingClientRect();
+        // tolerancia (subdivisión aproxima el borde)
+        const TOL = 35;
+        const onEdgeStart =
+          startAbs.x <= raAbs.left + TOL || startAbs.x >= raAbs.right - TOL ||
+          startAbs.y <= raAbs.top + TOL || startAbs.y >= raAbs.bottom - TOL;
+        const onEdgeEnd =
+          endAbs.x <= rbAbs.left + TOL || endAbs.x >= rbAbs.right - TOL ||
+          endAbs.y <= rbAbs.top + TOL || endAbs.y >= rbAbs.bottom - TOL;
+        // el punto debe estar cerca de la caja (para detectar desplazamientos
+        // del SVG que hagan que la flecha no coincida con las cajas)
+        const nearStartBox =
+          startAbs.x >= raAbs.left - TOL && startAbs.x <= raAbs.right + TOL &&
+          startAbs.y >= raAbs.top - TOL && startAbs.y <= raAbs.bottom + TOL;
+        const nearEndBox =
+          endAbs.x >= rbAbs.left - TOL && endAbs.x <= rbAbs.right + TOL &&
+          endAbs.y >= rbAbs.top - TOL && endAbs.y <= rbAbs.bottom + TOL;
+        const cxA = raAbs.left + raAbs.width / 2, cyA = raAbs.top + raAbs.height / 2;
+        const cxB = rbAbs.left + rbAbs.width / 2, cyB = rbAbs.top + rbAbs.height / 2;
+        const distStart = Math.hypot(startAbs.x - cxA, startAbs.y - cyA);
+        const distEnd = Math.hypot(endAbs.x - cxB, endAbs.y - cyB);
+        // Orientación de la punta (tangente final en la misma dirección que
+        // centro-origen -> centro-destino)
         const c2x = nums[n - 4], c2y = nums[n - 3];
         const tEndX = end.x - c2x, tEndY = end.y - c2y;
         const dirX = cxB - cxA, dirY = cyB - cyA;
-        // producto escalar normalizado > 0 => misma dirección
         const dot = tEndX * dirX + tEndY * dirY;
         geom = {
-          onEdgeStart, onEdgeEnd, distStart, distEnd,
-          tipPointsForward: dot > 0
+          onEdgeStart, onEdgeEnd, nearStartBox, nearEndBox,
+          distStart, distEnd, tipPointsForward: dot > 0
         };
       }
       results.arrows.push({
@@ -248,6 +262,8 @@ async function inspectSlide(page, idx, total) {
       check(a.geom.distStart > 10, name + ' — flecha no sale del centro', `${a.from} d=${a.geom.distStart.toFixed(0)}`);
       check(a.geom.distEnd > 10, name + ' — flecha no llega al centro', `${a.to} d=${a.geom.distEnd.toFixed(0)}`);
       check(a.geom.tipPointsForward, name + ' — punta bien orientada', `${a.from}→${a.to}`);
+      check(a.geom.nearStartBox, name + ' — flecha coincide con caja origen', `${a.from}`);
+      check(a.geom.nearEndBox, name + ' — flecha coincide con caja destino', `${a.to}`);
     }
   }
   check(r.mermaid.ok, name + ' — mermaid renderizado', r.mermaid.count ? `${r.mermaid.count} diagrama(s)` : '');
