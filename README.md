@@ -104,6 +104,39 @@ contenido...
 - `id=nombre` → referencia para las flechas
 - Flechas: `::: arrow from=A to=B curve=.3 :::` (curva entre 0 y 1)
 
+### Imágenes
+
+Las imágenes se escriben en markdown; las rutas son **relativas a la carpeta
+del deck** (cada deck con sus imágenes). Se dimensionan con clases al estilo
+del framework:
+
+```markdown
+![Descripción](img/foto.png){.img-w-40 .img-shadow}
+```
+
+Clases disponibles:
+
+| Clase | Efecto |
+|---|---|
+| (por defecto) | `max-width:100%`, esquinas redondeadas |
+| `.img-w-25` / `.img-w-40` / `.img-w-50` / `.img-w-60` / `.img-w-80` | ancho en % |
+| `.img-center` | centrada (margen auto) |
+| `.img-shadow` | sombra (`--sd-shadow-md`) |
+| `.img-full` | cubre toda la diapositiva |
+
+También puedes usar HTML crudo: `<img src="img/foto.png" class="img-w-40">`.
+Para poner imagen y texto lado a lado, usa columnas:
+
+```markdown
+::: col
+![Foto](img/foto.png){.img-w-80}
+:::
+::: col
+## Texto al lado
+Contenido...
+:::
+```
+
 ### Fragmentos (revelado progresivo)
 
 ```markdown

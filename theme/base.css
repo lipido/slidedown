@@ -146,6 +146,27 @@ sd-deck { display: block; }
 .sd-slide th { background: var(--sd-bg-soft); font-weight: var(--sd-font-weight-bold); }
 .sd-slide tr:nth-child(even) td { background: var(--sd-bg-soft); }
 
+/* ------------------------- imágenes ------------------------- */
+.sd-slide img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  border-radius: var(--sd-radius);
+}
+.sd-slide img.img-center { margin-left: auto; margin-right: auto; }
+.sd-slide img.img-shadow { box-shadow: var(--sd-shadow-md); }
+.sd-slide img.img-w-25 { width: 25%; }
+.sd-slide img.img-w-40 { width: 40%; }
+.sd-slide img.img-w-50 { width: 50%; }
+.sd-slide img.img-w-60 { width: 60%; }
+.sd-slide img.img-w-80 { width: 80%; }
+.sd-slide img.img-full {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 0;
+}
+
 /* ------------------------ fragmentos ------------------------ */
 .sd-slide .fragment {
   opacity: 0;

@@ -27,6 +27,7 @@ Presentaciones en **Markdown**, cero build.
 
 - Diapositivas separadas por `---`
 - Layouts y columnas con `::: col :::`
+- Imágenes en markdown con clases de tamaño
 - Revelado progresivo con `{fragment}`
 - Diagramas de texto con ` ```mermaid `
 - Infografías con cajas posicionadas y flechas SVG
@@ -104,6 +105,26 @@ Escala y mide resultados.
 ::: arrow from=idea to=proto curve=.25 :::
 ::: arrow from=proto to=valida curve=.25 :::
 ::: arrow from=valida to=lanza curve=.25 :::
+
+---
+
+<!-- slide: layout=default transition=fade -->
+::: col
+![Ejemplo](img/foto.png){.img-w-80 .img-shadow}
+:::
+
+::: col
+## Imágenes en columnas
+
+Las imágenes se escriben en markdown y se dimensionan con clases:
+
+- `{.img-w-40}` → ancho 40 %
+- `{.img-center}` → centrada
+- `{.img-shadow}` → sombra
+- `{.img-round}` → esquinas redondeadas (por defecto)
+
+Rutas relativas a la carpeta del deck.
+:::
 
 ---
 

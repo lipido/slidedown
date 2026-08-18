@@ -145,6 +145,31 @@ Este es un aviso `danger`.
 
 ---
 
+# Imágenes
+
+Imagen básica en markdown, centrada y con sombra:
+
+![Descripción](img/foto.png){.img-center .img-w-50 .img-shadow}
+
+---
+
+# Imagen en columna
+
+::: col
+![Gráfico](img/grafico.png){.img-w-80}
+:::
+
+::: col
+## Texto al lado
+
+Imagen a la izquierda, texto a la derecha usando columnas.
+
+- Las rutas son relativas a la carpeta del sample.
+- Clases útiles: `.img-w-40`, `.img-center`, `.img-shadow`.
+:::
+
+---
+
 | Atajo | Acción |
 |---|---|
 | `→` / `Espacio` | Siguiente (revela fragmentos) |

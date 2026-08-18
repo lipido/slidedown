@@ -135,3 +135,23 @@ Lógica y persistencia.
 
 ::: arrow from=fa to=ba curve=.25 :::
 :::
+
+---
+
+# Imagen y diagrama
+
+::: col
+![Diagrama](img/diagrama.png){.img-w-80 .img-shadow}
+:::
+
+::: col
+## Diagrama + imagen
+
+Puedes mezclar imágenes y diagramas en las columnas:
+
+```mermaid
+graph LR
+  A[Datos] --> B[Análisis]
+  B --> C[Visualización]
+```
+:::

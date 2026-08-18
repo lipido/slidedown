@@ -158,6 +158,20 @@ async function inspectSlide(page, idx, total) {
     // --- Fragments ---
     results.fragCount = s.querySelectorAll('.fragment').length;
 
+    // --- Imágenes ---
+    results.images = [];
+    s.querySelectorAll('img').forEach((img) => {
+      const r = img.getBoundingClientRect();
+      const sr = s.getBoundingClientRect();
+      results.images.push({
+        src: img.getAttribute('src'),
+        loaded: img.complete && img.naturalWidth > 0,
+        broken: img.complete && img.naturalWidth === 0,
+        overflowX: r.right > sr.right + 1 || r.left < sr.left - 1,
+        overflowY: r.bottom > sr.bottom + 1
+      });
+    });
+
     results.boxes = results.boxes.map(({ el, ...rest }) => rest);
 
     return results;
@@ -183,6 +197,10 @@ async function inspectSlide(page, idx, total) {
     check(a.hasSvg, name + ' — flecha con SVG', `${a.from}→${a.to}`);
   }
   check(r.mermaid.ok, name + ' — mermaid renderizado', r.mermaid.count ? `${r.mermaid.count} diagrama(s)` : '');
+  for (const im of r.images) {
+    check(im.loaded && !im.broken, name + ' — imagen cargada', im.src || '(sin src)');
+    check(!im.overflowX && !im.overflowY, name + ' — imagen sin desborde', im.src || '(sin src)');
+  }
 }
 
 async function run() {
@@ -219,6 +237,13 @@ async function run() {
         if (!ds.length) return true;
         return Array.from(ds).every((d) => d.dataset.rendered === '1' || !!d.querySelector('.sd-diagram-error'));
       }, null, { timeout: 15000 }).catch(() => {});
+      // esperar a que las imágenes de la diapositiva activa terminen de cargar
+      await page.waitForFunction(() => {
+        const s = document.querySelector('.sd-slide.sd-active');
+        if (!s) return true;
+        const imgs = Array.from(s.querySelectorAll('img'));
+        return imgs.every((i) => i.complete);
+      }, null, { timeout: 10000 }).catch(() => {});
       await inspectSlide(page, i, total);
       const slug = deck.name.replace(/[^a-zA-Z0-9]+/g, '_').replace(/^_|_$/g, '');
       await page.screenshot({ path: path.join(SHOTS_DIR, `${slug}_${String(i).padStart(2, '0')}.png`) });
