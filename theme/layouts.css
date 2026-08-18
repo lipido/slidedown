@@ -67,3 +67,22 @@
 /* free: lienzo libre para infografías (cajas posicionadas + flechas) */
 .sd-slide[data-layout="free"] { padding: 0; }
 .sd-slide[data-layout="free"] .sd-content { display: block; width: 100%; height: 100%; }
+.sd-slide[data-layout="free"] .sd-content:has(.sd-free-header) {
+  display: flex;
+  flex-direction: column;
+}
+
+/* En free, si hay título/intro, se separa en header + canvas. El canvas es el
+   contenedor posicionado: las coordenadas % de las cajas se calculan sobre el
+   área libre (debajo del header) y no pisan el texto. */
+.sd-slide[data-layout="free"] .sd-free-header {
+  padding: var(--sd-slide-padding) var(--sd-slide-padding) calc(var(--sd-slide-padding) / 2);
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+}
+.sd-slide[data-layout="free"] .sd-free-canvas {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
