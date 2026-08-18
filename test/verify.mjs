@@ -200,10 +200,20 @@ async function inspectSlide(page, idx, total) {
     s.querySelectorAll('img').forEach((img) => {
       const r = img.getBoundingClientRect();
       const sr = s.getBoundingClientRect();
+      // ¿la imagen está dentro de una caja posicionada (textbox/box)?
+      const box = img.closest('.textbox, .box');
+      let boxOverflow = false;
+      if (box) {
+        const br = box.getBoundingClientRect();
+        // la imagen no debe desbordar los límites de su caja
+        boxOverflow = r.right > br.right + 2 || r.left < br.left - 2 || r.bottom > br.bottom + 2;
+      }
       results.images.push({
         src: img.getAttribute('src'),
         loaded: img.complete && img.naturalWidth > 0,
         broken: img.complete && img.naturalWidth === 0,
+        inBox: !!box,
+        boxOverflow,
         overflowX: r.right > sr.right + 1 || r.left < sr.left - 1,
         overflowY: r.bottom > sr.bottom + 1
       });
@@ -244,6 +254,9 @@ async function inspectSlide(page, idx, total) {
   for (const im of r.images) {
     check(im.loaded && !im.broken, name + ' — imagen cargada', im.src || '(sin src)');
     check(!im.overflowX && !im.overflowY, name + ' — imagen sin desborde', im.src || '(sin src)');
+    if (im.inBox) {
+      check(!im.boxOverflow, name + ' — imagen dentro de caja sin desborde', im.src || '(sin src)');
+    }
   }
 }
 
@@ -288,6 +301,8 @@ async function run() {
         const imgs = Array.from(s.querySelectorAll('img'));
         return imgs.every((i) => i.complete);
       }, null, { timeout: 10000 }).catch(() => {});
+      // pequeño margen para que el listener 'load' redibuje las flechas
+      await page.waitForTimeout(60);
       await inspectSlide(page, i, total);
       const slug = deck.name.replace(/[^a-zA-Z0-9]+/g, '_').replace(/^_|_$/g, '');
       await page.screenshot({ path: path.join(SHOTS_DIR, `${slug}_${String(i).padStart(2, '0')}.png`) });

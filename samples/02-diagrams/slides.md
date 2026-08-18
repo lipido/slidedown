@@ -175,3 +175,32 @@ Llega por el borde **superior**.
 
 ::: arrow from=a to=b side=bottom to-side=top curve=.35 :::
 
+---
+
+# Cajas con imágenes
+
+Las cajas de la infografía pueden contener imágenes, con flechas entre ellas:
+
+<!-- slide: layout=free transition=zoom -->
+::: textbox id=srv pos-5-15 w-30
+![Servidor](img/icon-servidor.png){.img-w-40 .img-center}
+### Servidor
+Procesa las peticiones.
+:::
+
+::: box id=cli pos-65-15 w-30
+![Cliente](img/icon-cliente.png){.img-w-40 .img-center}
+### Cliente
+Envia consultas.
+:::
+
+::: box id=qry pos-35-55 w-30
+![Consulta](img/icon-consulta.png){.img-w-40 .img-center}
+### Consulta
+La operación de datos.
+:::
+
+::: arrow from=cli to=srv curve=.3 :::
+::: arrow from=srv to=qry curve=.25 :::
+::: arrow from=qry to=cli curve=.25 :::
+

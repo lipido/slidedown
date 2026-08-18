@@ -116,6 +116,20 @@ cajas, salvo que lo fuerces con:
 ::: arrow from=A to=B side=bottom to-side=top curve=.3 :::
 ```
 
+Las cajas (`::: textbox :::` / `::: box :::`) pueden contener **imágenes**:
+se escriben en markdown dentro de la caja y se ajustan con las clases de imagen
+(`.img-w-*`, `.img-center`). La altura de la caja crece con el contenido.
+
+```markdown
+::: textbox id=srv pos-5-15 w-30
+![Servidor](img/icono.png){.img-w-40 .img-center}
+### Servidor
+Descripción...
+:::
+
+::: arrow from=srv to=cli curve=.3 :::
+```
+
 ### Imágenes
 
 Las imágenes se escriben en markdown; las rutas son **relativas a la carpeta

@@ -78,6 +78,10 @@ const assets = [
   { file: 'samples/00-layouts/img/grafico.png', w: 800, h: 600, color: [240, 162, 50], radius: 40 },
   // sample 02-diagrams: imagen dentro de columna
   { file: 'samples/02-diagrams/img/diagrama.png', w: 700, h: 500, color: [46, 158, 91], radius: 30 },
+  // sample 02-diagrams: iconos para cajas de infografía
+  { file: 'samples/02-diagrams/img/icon-servidor.png', w: 160, h: 160, color: [91, 91, 214], radius: 32 },
+  { file: 'samples/02-diagrams/img/icon-cliente.png', w: 160, h: 160, color: [46, 158, 91], radius: 32 },
+  { file: 'samples/02-diagrams/img/icon-consulta.png', w: 160, h: 160, color: [240, 162, 50], radius: 32 },
   // deck raíz: imagen de ejemplo
   { file: 'img/foto.png', w: 900, h: 600, color: [123, 123, 245], radius: 44 },
 ];
