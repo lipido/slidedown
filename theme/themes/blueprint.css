@@ -1,0 +1,79 @@
+/* ==========================================================================
+   SLIDEDOWN — TEMA "BLUEPRINT" (ejemplo de cómo crear un tema)
+   --------------------------------------------------------------------------
+   Plantilla de referencia: un tema de ingeniería (azul + amarillo plotter,
+   tipografía monoespaciada, esquinas rectas, sin sombras, fondo cuadriculado).
+   Para crear tu propio tema: copia este archivo, cambia el nombre del
+   selector (p. ej. [data-theme="corporativo"]) y sobreescribe SOLO los
+   tokens que quieras cambiar. Lo que no sobreescribas hereda del tema base.
+   ========================================================================== */
+
+[data-theme="blueprint"] {
+  /* ============ COLOR ============ */
+  --sd-bg: #0b1f3a;              /* Azul marino de fondo */
+  --sd-bg-soft: #0f2a4d;         /* Paneles ligeramente más claros */
+  --sd-bg-inverse: #d9e6f2;
+  --sd-fg: #d9e6f2;              /* Texto claro */
+  --sd-fg-soft: #b6c8da;
+  --sd-muted: #7d94ad;
+
+  --sd-accent: #f6c945;          /* Amarillo "plotter" */
+  --sd-accent-fg: #0b1f3a;
+  --sd-accent-2: #56c8a8;
+  --sd-accent-2-fg: #0b1f3a;
+  --sd-link: #56c8a8;
+
+  --sd-info: #56c8a8;
+  --sd-info-fg: #0b1f3a;
+  --sd-success: #4ad295;
+  --sd-success-fg: #0b1f3a;
+  --sd-warning: #f6c945;
+  --sd-warning-fg: #0b1f3a;
+  --sd-danger: #ff6b6b;
+  --sd-danger-fg: #0b1f3a;
+
+  --sd-border: #24466b;
+  --sd-code-bg: #0d2744;
+  --sd-code-fg: #56c8a8;
+
+  --sd-gradient-1: #0f2a4d;
+  --sd-gradient-2: #143a63;
+
+  --sd-ui-bg: #081726;
+  --sd-ui-fg: #d9e6f2;
+  --sd-overview-bg: #081726;
+  --sd-progress-bg: rgba(255, 255, 255, .1);
+
+  --sd-textbox-bg: #0d2744;
+  --sd-textbox-border: #f6c945;
+
+  /* ========== TIPOGRAFÍA ========== */
+  --sd-font-heading: 'Courier New', ui-monospace, Menlo, monospace;
+  --sd-font-body: 'Segoe UI', -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  --sd-font-mono: 'Courier New', ui-monospace, Menlo, monospace;
+
+  /* ============ FORMAS ============ */
+  --sd-radius: 0px;              /* Esquinas rectas, estilo técnico */
+  --sd-radius-sm: 0px;
+  --sd-radius-lg: 0px;
+  --sd-shadow-sm: none;          /* Sin sombras: plano */
+  --sd-shadow-md: none;
+  --sd-shadow-lg: none;
+
+  /* ========== DIAGRAMAS ========== */
+  --sd-mermaid-node-bg: #0f2a4d;
+  --sd-mermaid-node-fg: #d9e6f2;
+  --sd-mermaid-node-border: #f6c945;
+  --sd-mermaid-edge: #56c8a8;
+  --sd-arrow-color: #f6c945;
+  --sd-arrow-head: #f6c945;
+}
+
+/* Detalle propio del tema: fondo cuadriculado de las diapositivas. */
+[data-theme="blueprint"] .sd-slide {
+  background-image:
+    linear-gradient(var(--sd-border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--sd-border) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-position: -1px -1px;
+}

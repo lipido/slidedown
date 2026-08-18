@@ -1,0 +1,56 @@
+/* ==========================================================================
+   SLIDEDOWN — IMPRESIÓN / EXPORT PDF
+   Cada diapositiva = una página de 1280x720 (16:9).
+   - En Chrome/Edge: Ctrl+P o el botón "PDF" del reproductor.
+   - En Firefox la página puede salir como A4; cambia @page si lo prefieres.
+   ========================================================================== */
+
+@page { size: 1280px 720px; margin: 0; }
+
+@media print {
+  html, body {
+    background: #fff;
+    overflow: visible;
+    height: auto;
+  }
+  .sd-ui, .sd-progress, .sd-notes-panel { display: none !important; }
+  sd-deck { display: block; }
+
+  .sd-stage {
+    position: static;
+    display: block;
+    overflow: visible;
+    padding: 0;
+    background: none;
+  }
+  .sd-deck-frame { transform: none !important; width: auto !important; height: auto !important; }
+
+  .sd-slide {
+    position: relative !important;
+    width: 1280px !important;
+    height: 720px !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    transform: none !important;
+    z-index: auto !important;
+    box-shadow: none !important;
+    page-break-after: always;
+    break-after: page;
+  }
+  .sd-slide.sd-enter, .sd-slide.sd-leaving { animation: none !important; }
+  .sd-slide .fragment { opacity: 1 !important; }
+  .sd-slide .sd-content { transform: none !important; width: auto; height: auto; }
+  .sd-slide sd-diagram, .sd-slide .sd-arrow svg { transform: none !important; }
+
+  /* Notas del orador impresas al pie de su diapositiva. */
+  .sd-slide[data-notes]:not([data-notes=""])::after {
+    content: attr(data-notes);
+    display: block;
+    margin-top: 14px;
+    padding-top: 8px;
+    border-top: 1px solid #ccc;
+    font-size: 13px;
+    color: #666;
+    white-space: pre-wrap;
+  }
+}

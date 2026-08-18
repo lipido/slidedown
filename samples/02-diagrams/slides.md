@@ -1,0 +1,137 @@
+---
+title: slidedown · 02 · Diagramas
+theme: dark
+transition: slide
+---
+
+<!-- ============================================================
+   SAMPLE 02 — DIAGRAMAS
+   Dos formas:
+   1) Mermaid:  ```mermaid ... ```  (diagramas de texto)
+   2) Infografía: cajas posicionadas + flechas SVG con ::: arrow :::.
+   ============================================================ -->
+
+# Diagramas con Mermaid
+
+Escribe el diagrama en texto; el navegador lo dibuja.
+
+```mermaid
+graph TD
+  A[Inicio] --> B{Sesión válida?}
+  B -->|Sí| C[Panel]
+  B -->|No| D[Login]
+  D --> C
+  C --> E[Logout]
+  E --> A
+```
+
+---
+
+## Flowchart horizontal
+
+```mermaid
+flowchart LR
+  A[Requisitos] --> B[Diseño]
+  B --> C[Código]
+  C --> D[Test]
+  D --> E{¿Pasa?}
+  E -->|Sí| F[Release]
+  E -->|No| C
+```
+
+---
+
+## Diagrama de secuencia
+
+```mermaid
+sequenceDiagram
+  participant U as Usuario
+  participant S as Servidor
+  participant B as Base de datos
+  U->>S: GET /api/datos
+  S->>B: SELECT ...
+  B-->>S: filas
+  S-->>U: JSON 200
+  alt Error
+    S-->>U: 500 Internal Error
+  end
+```
+
+---
+
+## Timeline
+
+```mermaid
+timeline
+  title Lanzamiento del producto
+  Q1 : Idea y validación
+  Q2 : Prototipo y tests
+  Q3 : Beta privada
+  Q4 : Lanzamiento público
+```
+
+---
+
+# Infografía con flechas SVG
+
+Cajas posicionadas conectadas por `::: arrow :::`.
+
+<!-- slide: layout=free transition=zoom -->
+::: textbox id=entrada pos-5-8 w-26
+### Entrada
+Datos crudos de varias fuentes.
+:::
+
+::: box id=limpieza pos-38-8 w-26
+### Limpieza
+Filtrado, deduplicado, normalizado.
+:::
+
+::: box id=analisis pos-71-8 w-26
+### Análisis
+Agregación y métricas clave.
+:::
+
+::: textbox id=modelo pos-38-55 w-26
+### Modelo
+Entrenamiento y validación.
+:::
+
+::: box id=salida pos-71-55 w-26
+### Salida
+Informes y alertas.
+:::
+
+::: arrow from=entrada to=limpieza curve=.2 :::
+::: arrow from=limpieza to=analisis curve=.2 :::
+::: arrow from=limpieza to=modelo curve=.35 :::
+::: arrow from=modelo to=salida curve=.2 :::
+::: arrow from=analisis to=salida curve=.35 :::
+
+---
+
+# Combinando Mermaid y flechas
+
+Mermaid dentro de una columna, flechas en la otra.
+
+::: col
+```mermaid
+graph TB
+  A[Front] --> B[API]
+  B --> C[DB]
+```
+:::
+
+::: col
+::: textbox id=fa pos-15-15 w-55
+### Front
+Lo que ve el usuario.
+:::
+
+::: textbox id=ba pos-15-55 w-55
+### Backend
+Lógica y persistencia.
+:::
+
+::: arrow from=fa to=ba curve=.25 :::
+:::

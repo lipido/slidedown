@@ -1,0 +1,16 @@
+# Dependencias de build (no se usan, pero por si acaso)
+node_modules/
+
+# Logs y temporales
+*.log
+*.tmp
+.DS_Store
+
+# Python / servidores locales
+__pycache__/
+*.pyc
+.vscode/
+.idea/
+
+# Archivos de verificación temporales del entorno de desarrollo
+.verify.html

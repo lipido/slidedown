@@ -1,0 +1,64 @@
+/* ==========================================================================
+   SLIDEDOWN — TEMA OSCURO
+   Solo sobreescribe tokens. La estructura visual vive en base.css, layouts.css,
+   transitions.css y diagrams.css, que consumen estas variables.
+   ========================================================================== */
+
+[data-theme="dark"] {
+  /* -- Superficies y texto -- */
+  --sd-bg: #0f1117;
+  --sd-bg-soft: #171a23;
+  --sd-bg-inverse: #f5f6fa;
+  --sd-fg: #e8eaf0;
+  --sd-fg-soft: #c3c8d4;
+  --sd-muted: #8b90a0;
+
+  /* -- Acentos -- */
+  --sd-accent: #7b7bf5;
+  --sd-accent-fg: #0f1117;
+  --sd-accent-2: #f6b13d;
+  --sd-accent-2-fg: #0f1117;
+  --sd-link: #7cb0ff;
+
+  /* -- Estados -- */
+  --sd-info: #7cb0ff;
+  --sd-info-fg: #0f1117;
+  --sd-success: #4ad295;
+  --sd-success-fg: #0f1117;
+  --sd-warning: #f6b13d;
+  --sd-warning-fg: #0f1117;
+  --sd-danger: #ff6b6b;
+  --sd-danger-fg: #0f1117;
+
+  /* -- Bordes / código -- */
+  --sd-border: #262b38;
+  --sd-code-bg: #161a24;
+  --sd-code-fg: #e4a4f2;
+
+  /* -- Gradientes -- */
+  --sd-gradient-1: #4a4abf;
+  --sd-gradient-2: #a04bd6;
+
+  /* -- UI -- */
+  --sd-ui-bg: #07080c;
+  --sd-ui-fg: #e8eaf0;
+  --sd-overview-bg: #07080c;
+  --sd-progress-bg: rgba(255, 255, 255, .1);
+
+  /* -- Cajas de texto -- */
+  --sd-textbox-bg: #151924;
+  --sd-textbox-border: #454a8f;
+
+  /* -- Sombras -- */
+  --sd-shadow-sm: 0 1px 3px rgba(0, 0, 0, .5);
+  --sd-shadow-md: 0 6px 20px rgba(0, 0, 0, .55);
+  --sd-shadow-lg: 0 14px 44px rgba(0, 0, 0, .6);
+
+  /* -- Diagramas -- */
+  --sd-mermaid-node-bg: #171a23;
+  --sd-mermaid-node-fg: #e8eaf0;
+  --sd-mermaid-node-border: #7b7bf5;
+  --sd-mermaid-edge: #5c6272;
+  --sd-arrow-color: #7b7bf5;
+  --sd-arrow-head: #7b7bf5;
+}

@@ -1,0 +1,123 @@
+/* ==========================================================================
+   SLIDEDOWN — DESIGN TOKENS (tema base "light")
+   --------------------------------------------------------------------------
+   ESTE ES EL ÚNICO SITIO DONDE VIVE EL ESTILO DEL TEMA.
+   - Los componentes (base.css, layouts.css, transitions.css, diagrams.css)
+     SOLO consumen estas variables. No los toques para cambiar el look.
+   - Para crear un tema nuevo: copia theme/themes/blueprint.css y
+     sobreescribe estas variables dentro de [data-theme="tu-tema"].
+   - Estructura por grupos: COLOR · TIPOGRAFÍA · ESPACIADO · FORMAS ·
+     MOVIMIENTO · LAYOUT · DIAGRAMAS.
+   ========================================================================== */
+
+:root,
+[data-theme="light"] {
+  /* ============================ COLOR ============================== */
+
+  /* -- Superficies y texto -- */
+  --sd-bg: #fdfdfd;             /* Fondo principal de las diapositivas */
+  --sd-bg-soft: #f2f4f8;        /* Fondo de cajas, paneles, tablas, citas */
+  --sd-bg-inverse: #14142b;     /* Fondo invertido (no se usa por defecto) */
+  --sd-fg: #1b1b2f;             /* Color principal del texto */
+  --sd-fg-soft: #3a3a55;        /* Texto secundario (párrafos suaves) */
+  --sd-muted: #6f7280;          /* Texto terciario / metadatos */
+
+  /* -- Acentos -- */
+  --sd-accent: #5b5bd6;         /* Acento principal: títulos, links, UI, bordes */
+  --sd-accent-fg: #ffffff;      /* Texto sobre el acento */
+  --sd-accent-2: #f0a232;       /* Acento secundario (contrapunto) */
+  --sd-accent-2-fg: #1b1b2f;    /* Texto sobre el acento secundario */
+  --sd-link: #2f6fdb;           /* Color de enlaces */
+
+  /* -- Estados -- */
+  --sd-info: #2f6fdb;           /* Aviso informativo */
+  --sd-info-fg: #ffffff;
+  --sd-success: #2e9e5b;        /* Éxito */
+  --sd-success-fg: #ffffff;
+  --sd-warning: #d97706;        /* Advertencia */
+  --sd-warning-fg: #ffffff;
+  --sd-danger: #d64545;         /* Peligro / errores */
+  --sd-danger-fg: #ffffff;
+
+  /* -- Bordes y líneas -- */
+  --sd-border: #e3e6ee;         /* Color de bordes y separadores */
+  --sd-border-width: 2px;       /* Grosor habitual de borde */
+
+  /* -- Código -- */
+  --sd-code-bg: #f0f1f6;        /* Fondo de bloques de código */
+  --sd-code-fg: #b12b83;        /* Color de texto en línea de código */
+
+  /* -- Gradientes (layout "section") -- */
+  --sd-gradient-1: #5b5bd6;     /* Inicio del degradado de sección */
+  --sd-gradient-2: #9a5bd6;     /* Fin del degradado de sección */
+
+  /* -- UI del reproductor (no de la diapositiva) -- */
+  --sd-ui-bg: #101018;          /* Fondo de la barra de controles / stage */
+  --sd-ui-fg: #f5f6fa;          /* Texto de la barra de controles */
+  --sd-overview-bg: #0e0e16;    /* Fondo de la vista de miniaturas */
+  --sd-progress-bg: rgba(255, 255, 255, .15); /* Fondo de la barra de progreso */
+
+  /* -- Cajas de texto (::: textbox :::) -- */
+  --sd-textbox-bg: #ffffff;     /* Fondo de cajas de texto flotantes */
+  --sd-textbox-border: #c9cdfa; /* Borde de cajas de texto flotantes */
+
+  /* ========================== TIPOGRAFÍA ============================ */
+
+  --sd-font-heading: 'Segoe UI', -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  --sd-font-body: 'Segoe UI', -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  --sd-font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+
+  --sd-font-size-base: 24px;    /* Tamaño base del contenido */
+  --sd-h1-size: 64px;           /* Título de diapositiva principal */
+  --sd-h2-size: 44px;           /* Subtítulo */
+  --sd-h3-size: 32px;           /* Apartado dentro de una diapositiva */
+
+  --sd-line-height: 1.5;        /* Interlineado del cuerpo */
+  --sd-heading-line-height: 1.15; /* Interlineado de títulos */
+  --sd-font-weight-normal: 400;
+  --sd-font-weight-bold: 700;
+  --sd-letter-spacing-heading: -0.02em; /* Ajuste de títulos grandes */
+
+  /* ============================ ESPACIADO ============================ */
+
+  --sd-space-unit: 8px;         /* Unidad base de espaciado (márgenes, gaps) */
+  --sd-slide-padding: 64px;     /* Padding interior de cada diapositiva */
+  --sd-gap: 24px;               /* Separación entre columnas / grid */
+
+  /* ========================= FORMAS Y SOMBRAS ======================== */
+
+  --sd-radius: 14px;            /* Radio de redondeo estándar */
+  --sd-radius-sm: 8px;          /* Radio pequeño (código, citas) */
+  --sd-radius-lg: 24px;         /* Radio grande (paneles destacados) */
+
+  --sd-shadow-sm: 0 1px 3px rgba(15, 15, 35, .12);
+  --sd-shadow-md: 0 6px 20px rgba(15, 15, 35, .16);
+  --sd-shadow-lg: 0 14px 44px rgba(15, 15, 35, .22);
+
+  /* ============================ MOVIMIENTO =========================== */
+
+  --sd-transition-default: fade; /* Transición por defecto (fade|slide|zoom|cover|flip|none) */
+  --sd-transition-duration: 500ms; /* Duración de transición entre diapositivas */
+  --sd-easing: cubic-bezier(.4, 0, .2, 1); /* Curva de easing global */
+  --sd-fragment-duration: 300ms; /* Duración del revelado de fragments */
+  --sd-fragment-stagger: 90ms;  /* Retardo entre fragments con stagger */
+
+  /* ============================= LAYOUT ============================== */
+
+  --sd-slide-width: 1280px;     /* Ancho de diseño de la diapositiva (16:9) */
+  --sd-slide-height: 720px;     /* Alto de diseño de la diapositiva (16:9) */
+
+  /* ============================ DIAGRAMAS ============================ */
+
+  /* Mermaid (nodos, bordes y texto) */
+  --sd-mermaid-node-bg: #eef0fa;      /* Fondo de los nodos */
+  --sd-mermaid-node-fg: #1b1b2f;      /* Texto de los nodos */
+  --sd-mermaid-node-border: #5b5bd6;  /* Borde de los nodos */
+  --sd-mermaid-edge: #8a8fa3;         /* Color de las conexiones */
+  --sd-mermaid-font-size: 16px;
+
+  /* Flechas SVG de infografías (::: arrow :::) */
+  --sd-arrow-color: #5b5bd6;    /* Color de la flecha */
+  --sd-arrow-width: 3px;        /* Grosor de la flecha */
+  --sd-arrow-head: #5b5bd6;     /* Color de la punta de flecha */
+}

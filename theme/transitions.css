@@ -1,0 +1,70 @@
+/* ==========================================================================
+   SLIDEDOWN — TRANSICIONES Y ANIMACIONES
+   Tipos: fade · slide · zoom · cover · flip · none.
+   Se elige por diapositiva con: <!-- slide: transition=zoom -->
+   La dirección (1 = siguiente, -1 = anterior) la controla JS con
+   --sd-direction. Todo es CSS puro: edita las keyframes o duración aquí.
+   ========================================================================== */
+
+/* -------- asignación de animaciones según el tipo -------- */
+.sd-slide[data-transition="fade"].sd-enter { animation-name: sd-fade-in; }
+.sd-slide[data-transition="fade"].sd-leaving { animation-name: sd-fade-out; }
+
+.sd-slide[data-transition="slide"].sd-enter { animation-name: sd-slide-in; }
+.sd-slide[data-transition="slide"].sd-leaving { animation-name: sd-slide-out; }
+
+.sd-slide[data-transition="zoom"].sd-enter { animation-name: sd-zoom-in; }
+.sd-slide[data-transition="zoom"].sd-leaving { animation-name: sd-zoom-out; }
+
+.sd-slide[data-transition="cover"].sd-enter { animation-name: sd-cover-in; }
+.sd-slide[data-transition="cover"].sd-leaving { animation-name: sd-cover-out; }
+
+.sd-slide[data-transition="flip"].sd-enter { animation-name: sd-flip-in; }
+.sd-slide[data-transition="flip"].sd-leaving { animation-name: sd-flip-out; }
+
+/* -------- comportamiento base de las animaciones -------- */
+.sd-enter {
+  animation-duration: var(--sd-transition-duration);
+  animation-timing-function: var(--sd-easing);
+  animation-fill-mode: both;
+  z-index: 2;
+}
+.sd-leaving {
+  animation-duration: var(--sd-transition-duration);
+  animation-timing-function: var(--sd-easing);
+  animation-fill-mode: both;
+  z-index: 2;
+}
+
+/* ---------------------------- fade ---------------------------- */
+@keyframes sd-fade-in  { from { opacity: 0; } }
+@keyframes sd-fade-out { from { opacity: 1; } to { opacity: 0; } }
+
+/* --------------------------- slide --------------------------- */
+@keyframes sd-slide-in {
+  from { transform: translateX(calc(var(--sd-direction) * 100%)); opacity: .4; }
+}
+@keyframes sd-slide-out {
+  to { transform: translateX(calc(var(--sd-direction) * -100%)); opacity: .4; }
+}
+
+/* ---------------------------- zoom ---------------------------- */
+@keyframes sd-zoom-in  { from { transform: scale(.7); opacity: 0; } }
+@keyframes sd-zoom-out { to   { transform: scale(.7); opacity: 0; } }
+
+/* ---------------------------- cover ---------------------------- */
+@keyframes sd-cover-in  { from { transform: scale(1.35); opacity: 0; } }
+@keyframes sd-cover-out { to   { transform: scale(.6); opacity: 0; } }
+
+/* ---------------------------- flip ---------------------------- */
+@keyframes sd-flip-in {
+  from { transform: perspective(1200px) rotateX(-90deg); transform-origin: 50% 100%; opacity: 0; }
+}
+@keyframes sd-flip-out {
+  to   { transform: perspective(1200px) rotateX(90deg); transform-origin: 50% 0%; opacity: 0; }
+}
+
+/* --------------------- respeto a usuarios --------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .sd-enter, .sd-leaving { animation-duration: 1ms !important; }
+}
