@@ -165,3 +165,24 @@ Los temas **solo sobreescriben tokens** (`--sd-*` definidos en `theme/tokens.css
 | `samples/99-theme` | Cómo crear un tema (con receta) |
 
 Para la IA: los samples son el manual de uso. Léelos junto a `theme/tokens.css`.
+
+## Desarrollo y verificación
+
+La suite de verificación (Playwright) recorre el deck raíz y todos los samples,
+navega por cada diapositiva y comprueba estructura, geometría, diagramas y
+ausencia de errores de consola. Genera capturas en `test/screenshots/`.
+
+Entorno reproducible con conda (nodejs incluido):
+
+```bash
+conda env create -f environment.yml
+conda activate slidedown
+npm install
+npx playwright install chromium
+npm test          # ejecuta la suite (test/verify.mjs)
+```
+
+- `npm test` sale con código 0 si todo pasa, o distinto de 0 si algo falla.
+- Para añadir aserciones nuevas: edita `test/verify.mjs`.
+- `node_modules/`, `package-lock.json`, `test/screenshots/`, `playwright-report/`
+  y `test-results/` están en `.gitignore`.
