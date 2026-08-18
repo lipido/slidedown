@@ -71,6 +71,19 @@ transition: slide
 
 Directivas de slide: `layout`, `transition`, `bg`, y `theme` en el frontmatter del deck.
 
+**Imagen de fondo** con `bg=` (ruta relativa a la carpeta del deck). La imagen
+cubre toda la diapositiva (`background-size: cover`). Para que el texto sea
+legible se añade una capa de oscurecimiento configurable:
+
+```markdown
+<!-- slide: layout=title bg=img/portada.png&dark=0.5 -->
+# Portada
+```
+
+- `dark=0` → sin oscurecer · `dark=1` → casi negro.
+- Si no se indica, usa el token del tema `--sd-bg-overlay` (por defecto `.35`).
+- Sin `dark` ni token: `.35`.
+
 ### Layouts
 
 `default`, `center`, `title`, `section`, `quote`, `full`, `free`.

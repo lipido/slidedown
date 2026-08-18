@@ -21,6 +21,7 @@
   --sd-fg: #1b1b2f;             /* Color principal del texto */
   --sd-fg-soft: #3a3a55;        /* Texto secundario (párrafos suaves) */
   --sd-muted: #6f7280;          /* Texto terciario / metadatos */
+  --sd-bg-overlay: rgba(0, 0, 0, .35); /* Oscurecimiento al usar bg= (imagen de fondo) */
 
   /* -- Acentos -- */
   --sd-accent: #5b5bd6;         /* Acento principal: títulos, links, UI, bordes */

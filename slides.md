@@ -15,7 +15,7 @@ transition: slide
        samples/99-theme      -> cómo crear un tema
      ============================================================ -->
 
-<!-- slide: layout=title -->
+<!-- slide: layout=title bg=img/foto.png&dark=0.45 -->
 # slidedown
 Presentaciones en **Markdown**, cero build.
 

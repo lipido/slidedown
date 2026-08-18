@@ -80,6 +80,19 @@ async function inspectSlide(page, idx, total) {
     // --- Errores de render ---
     results.hasErrorBox = !!s.querySelector('.sd-error, .sd-diagram-error');
 
+    // --- Fondo de diapositiva (bg=) ---
+    results.bg = { applied: false, loaded: false, src: null };
+    const bgImage = s.style.backgroundImage || '';
+    const urlMatch = bgImage.match(/url\(["']?([^"')]+)["']?\)/);
+    if (urlMatch) {
+      results.bg.applied = true;
+      results.bg.src = urlMatch[1];
+      // comprobar que la imagen de fondo carga (no rota)
+      const im = new Image();
+      im.src = urlMatch[1];
+      results.bg.loaded = im.complete && im.naturalWidth > 0;
+    }
+
     // --- Markdown crudo sin parsear dentro de columnas ---
     results.rawColMd = (() => {
       let n = 0;
@@ -269,6 +282,9 @@ async function inspectSlide(page, idx, total) {
   const name = `[${idx + 1}/${total}] ${r.layout || '?'}`;
   if (r.err) { ko(name + ' — carga', r.err); return; }
   check(!r.hasErrorBox, name + ' — sin caja de error', r.hasErrorBox ? 'hay sd-error' : '');
+  if (r.bg.applied) {
+    check(r.bg.loaded, name + ' — fondo de diapositiva cargó', r.bg.src || '(sin src)');
+  }
   check(r.rawColMd === 0, name + ' — cols sin markdown crudo', r.rawColMd ? `${r.rawColMd} bloque(s) crudo(s)` : '');
   for (const g of r.colGroups) {
     const gn = `${name} — col(s) ${g.count}`;

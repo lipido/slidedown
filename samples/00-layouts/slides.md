@@ -20,6 +20,15 @@ Un layout por diapositiva.
 
 ---
 
+<!-- slide: layout=title bg=img/foto.png&dark=0.5 -->
+# Portada con fondo
+
+Imagen de fondo con `bg=img/foto.png&dark=0.5`.
+
+<footer class="subtitle">`dark` controla el oscurecimiento (0 a 1)</footer>
+
+---
+
 # Layout `default`
 
 Contenido arriba-izquierda, tipografía normal.
