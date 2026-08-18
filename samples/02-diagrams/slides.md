@@ -119,17 +119,18 @@ Mermaid dentro de una columna, flechas en la otra.
 graph TB
   A[Front] --> B[API]
   B --> C[DB]
+  C --> D[Cache]
 ```
 :::
 
 ::: col
-::: textbox id=fa pos-15-15 w-55
-### Front
+::: textbox id=fa pos-10-10 w-70
+**Front**
 Lo que ve el usuario.
 :::
 
-::: textbox id=ba pos-15-55 w-55
-### Backend
+::: textbox id=ba pos-10-58 w-70
+**Backend**
 Lógica y persistencia.
 :::
 

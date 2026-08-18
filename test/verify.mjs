@@ -137,6 +137,34 @@ async function inspectSlide(page, idx, total) {
       }
     }
 
+    // --- ¿Algo pisa el título? (cajas o SVG de flechas sobre h1/h2) ---
+    results.titleOverlaps = [];
+    const titles = Array.from(s.querySelectorAll('h1, h2'));
+    if (titles.length) {
+      const titleRects = titles.map((t) => {
+        const r = t.getBoundingClientRect();
+        return { top: r.top, bottom: r.bottom, left: r.left, right: r.right };
+      });
+      const overlapsTitle = (r) => titleRects.some((tr) => {
+        const ox = Math.min(r.right, tr.right) - Math.max(r.left, tr.left);
+        const oy = Math.min(r.bottom, tr.bottom) - Math.max(r.top, tr.top);
+        return ox > 8 && oy > 8;
+      });
+      // cajas posicionadas (no anidadas, con fondo visible)
+      pos.forEach((b) => {
+        if (isNested(b)) return;
+        const r = { left: b.l, top: b.t, right: b.l + b.w, bottom: b.t + b.h };
+        if (overlapsTitle(r)) results.titleOverlaps.push(`caja ${b.id || b.cls}`);
+      });
+      // contenedores de flechas: su SVG no debe cubrir el título
+      s.querySelectorAll('.arrow svg').forEach((svg) => {
+        const r = svg.getBoundingClientRect();
+        if (overlapsTitle({ left: r.left, top: r.top, right: r.right, bottom: r.bottom })) {
+          results.titleOverlaps.push(`svg de flecha`);
+        }
+      });
+    }
+
     // --- Flechas ::: arrow ::: ---
     results.arrows = [];
     s.querySelectorAll('.arrow[data-from][data-to]').forEach((a) => {
@@ -253,6 +281,7 @@ async function inspectSlide(page, idx, total) {
     check(g.parsed, gn + ' contenido parseado');
   }
   check(r.overlaps.length === 0, name + ' — sin solapes de cajas', r.overlaps.length ? r.overlaps.join('; ') : '');
+  check(r.titleOverlaps.length === 0, name + ' — nada pisa el título', r.titleOverlaps.length ? r.titleOverlaps.join('; ') : '');
   for (const a of r.arrows) {
     check(a.fromExists && a.toExists, name + ' — flecha targets válidos', `${a.from}→${a.to}`);
     check(a.hasSvg, name + ' — flecha con SVG', `${a.from}→${a.to}`);

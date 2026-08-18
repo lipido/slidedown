@@ -10,7 +10,11 @@
 .sd-cols[data-count="2"] { grid-template-columns: 1fr 1fr; }
 .sd-cols[data-count="3"] { grid-template-columns: 1fr 1fr 1fr; }
 .sd-cols[data-count="4"] { grid-template-columns: 1fr 1fr 1fr 1fr; }
-.sd-cols .col { min-width: 0; }
+/* Las columnas son contenedores posicionados: las cajas pos-X-Y y las
+   flechas ::: arrow ::: que estén dentro de una columna se posicionan y se
+   anclan a ESA columna, no a la diapositiva completa. Así no invaden el
+   título ni otras columnas. */
+.sd-cols .col { min-width: 0; position: relative; }
 
 /* ---------------------- layouts de contenido ---------------------- */
 /* default: contenido arriba-izquierda */
