@@ -155,3 +155,23 @@ graph LR
   B --> C[Visualización]
 ```
 :::
+
+---
+
+# Flechas con `side`
+
+Puedes forzar el borde de salida/llegada con `side` y `to-side`:
+
+<!-- slide: layout=free transition=zoom -->
+::: textbox id=a pos-10-40 w-30
+### Origen
+Sale por el borde **inferior**.
+:::
+
+::: textbox id=b pos-60-10 w-30
+### Destino
+Llega por el borde **superior**.
+:::
+
+::: arrow from=a to=b side=bottom to-side=top curve=.35 :::
+

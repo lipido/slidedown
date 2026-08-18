@@ -140,12 +140,38 @@ async function inspectSlide(page, idx, total) {
     // --- Flechas ::: arrow ::: ---
     results.arrows = [];
     s.querySelectorAll('.arrow[data-from][data-to]').forEach((a) => {
+      const from = s.querySelector('#' + CSS.escape(a.dataset.from));
+      const to = s.querySelector('#' + CSS.escape(a.dataset.to));
+      const path = a.querySelector('svg path[marker-end]');
+      let geom = null;
+      if (path && from && to) {
+        const nums = path.getAttribute('d').match(/-?\d+(?:\.\d+)?/g).map(Number);
+        const start = { x: nums[0], y: nums[1] };
+        const n = nums.length;
+        const end = { x: nums[n - 2], y: nums[n - 1] };
+        const rectOf = (el) => {
+          const r2 = el.getBoundingClientRect();
+          const sr = s.getBoundingClientRect();
+          return { x: r2.left - sr.left, y: r2.top - sr.top, w: r2.width, h: r2.height };
+        };
+        const ra = rectOf(from), rb = rectOf(to);
+        const cxA = ra.x + ra.w / 2, cyA = ra.y + ra.h / 2;
+        const cxB = rb.x + rb.w / 2, cyB = rb.y + rb.h / 2;
+        // tolerancia: la subdivisión aproxima el borde con un margen
+        const TOL = 30;
+        const onEdgeStart = start.x <= ra.x + TOL || start.x >= ra.x + ra.w - TOL || start.y <= ra.y + TOL || start.y >= ra.y + ra.h - TOL;
+        const onEdgeEnd = end.x <= rb.x + TOL || end.x >= rb.x + rb.w - TOL || end.y <= rb.y + TOL || end.y >= rb.y + rb.h - TOL;
+        const distStart = Math.hypot(start.x - cxA, start.y - cyA);
+        const distEnd = Math.hypot(end.x - cxB, end.y - cyB);
+        geom = { onEdgeStart, onEdgeEnd, distStart, distEnd };
+      }
       results.arrows.push({
         from: a.dataset.from,
         to: a.dataset.to,
-        fromExists: !!s.querySelector('#' + CSS.escape(a.dataset.from)),
-        toExists: !!s.querySelector('#' + CSS.escape(a.dataset.to)),
-        hasSvg: !!a.querySelector('svg path[marker-end]')
+        fromExists: !!from,
+        toExists: !!to,
+        hasSvg: !!path,
+        geom
       });
     });
 
@@ -195,6 +221,12 @@ async function inspectSlide(page, idx, total) {
   for (const a of r.arrows) {
     check(a.fromExists && a.toExists, name + ' — flecha targets válidos', `${a.from}→${a.to}`);
     check(a.hasSvg, name + ' — flecha con SVG', `${a.from}→${a.to}`);
+    if (a.geom) {
+      check(a.geom.onEdgeStart, name + ' — flecha sale del borde', `${a.from} (d=${a.geom.distStart.toFixed(0)})`);
+      check(a.geom.onEdgeEnd, name + ' — flecha llega al borde', `${a.to} (d=${a.geom.distEnd.toFixed(0)})`);
+      check(a.geom.distStart > 10, name + ' — flecha no sale del centro', `${a.from} d=${a.geom.distStart.toFixed(0)}`);
+      check(a.geom.distEnd > 10, name + ' — flecha no llega al centro', `${a.to} d=${a.geom.distEnd.toFixed(0)}`);
+    }
   }
   check(r.mermaid.ok, name + ' — mermaid renderizado', r.mermaid.count ? `${r.mermaid.count} diagrama(s)` : '');
   for (const im of r.images) {

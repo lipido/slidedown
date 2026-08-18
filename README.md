@@ -104,6 +104,18 @@ contenido...
 - `id=nombre` → referencia para las flechas
 - Flechas: `::: arrow from=A to=B curve=.3 :::` (curva entre 0 y 1)
 
+Las flechas salen del **borde** de la caja de origen y llegan al **borde** de la
+caja de destino. El borde se elige automáticamente según la dirección entre las
+cajas, salvo que lo fuerces con:
+
+- `side=top|right|bottom|left` → fuerza el borde de salida en la caja de origen.
+- `to-side=top|right|bottom|left` → fuerza el borde de llegada en la de destino.
+
+```markdown
+::: arrow from=A to=B curve=.25 :::
+::: arrow from=A to=B side=bottom to-side=top curve=.3 :::
+```
+
 ### Imágenes
 
 Las imágenes se escriben en markdown; las rutas son **relativas a la carpeta
