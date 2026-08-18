@@ -13,6 +13,10 @@ python3 -m http.server
 # abre http://localhost:8000
 ```
 
+> **Recarga:** para ver cambios en `slides.md` y el CSS basta con recargar (F5).
+> Si editas `lib/slidedown.js`, usa recarga forzada (`shift` + recargar) para
+> descartar la caché del navegador.
+
 O escribe el markdown inline en `index.html` y ábrelo con doble clic (sin servidor):
 
 ```html
