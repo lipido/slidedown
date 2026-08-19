@@ -12,11 +12,11 @@ transition: fade
    Columnas: se crean con ::: col ::: y el JS las cuenta.
    ============================================================ -->
 
-<!-- slide: layout=title -->
+<!-- slide: layout=title id=portada -->
 # Layouts
 Un layout por diapositiva.
 
-<footer class="subtitle">Este es el layout `title`</footer>
+<footer class="subtitle">Este es el layout `title` · `id=portada` para CSS</footer>
 
 ---
 

@@ -75,7 +75,7 @@ async function inspectSlide(page, idx, total) {
   const r = await page.evaluate(({ idx }) => {
     const s = document.querySelector(`.sd-slide[data-idx="${idx}"]`);
     if (!s) return { err: 'slide no encontrada' };
-    const results = { layout: s.dataset.layout, transition: s.dataset.transition, notes: s.dataset.notes || '' };
+    const results = { layout: s.dataset.layout, transition: s.dataset.transition, notes: s.dataset.notes || '', slideId: s.id || '' };
 
     // --- Errores de render ---
     results.hasErrorBox = !!s.querySelector('.sd-error, .sd-diagram-error');
@@ -286,6 +286,9 @@ async function inspectSlide(page, idx, total) {
     check(r.bg.loaded, name + ' — fondo de diapositiva cargó', r.bg.src || '(sin src)');
   }
   check(r.rawColMd === 0, name + ' — cols sin markdown crudo', r.rawColMd ? `${r.rawColMd} bloque(s) crudo(s)` : '');
+  if (r.slideId) {
+    check(/^[a-zA-Z][\w-]*$/.test(r.slideId), name + ' — id de slide válido', r.slideId);
+  }
   for (const g of r.colGroups) {
     const gn = `${name} — col(s) ${g.count}`;
     check(g.ncols === Number(g.count), gn + ' nº de cols', `${g.ncols} != ${g.count}`);
@@ -337,6 +340,13 @@ async function run() {
     consoleErrors.length = 0;
     await page.goto(deck.url, { waitUntil: 'load' });
     await page.waitForFunction(() => document.querySelectorAll('.sd-slide').length > 0, null, { timeout: 15000 });
+
+    // el custom.css de la presentación debe estar enlazado (capa de overrides)
+    const hasCustomCss = await page.evaluate(() => {
+      return Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
+        .some((l) => (l.getAttribute('href') || '').includes('custom.css'));
+    });
+    check(hasCustomCss, `— custom.css enlazado`, deck.name);
 
     const total = await page.evaluate(() => document.querySelectorAll('.sd-slide').length);
     for (let i = 0; i < total; i++) {

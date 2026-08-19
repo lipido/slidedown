@@ -33,6 +33,7 @@ Guía para agentes que trabajan en slidedown. Léela antes de tocar código.
 ## Theming
 
 - El estilo vive en tokens (`--sd-*` en `tokens.css`). Los componentes solo consumen tokens; no pongas colores a pelo en CSS estructural.
+- Los ajustes por presentación van en `custom.css` (raíz, cargado al final): no tocar temas ni el core. Las slides pueden llevar `id=` (directiva de slide) como gancho para CSS.
 
 ## Trampas ya resueltas (no reintroducir)
 

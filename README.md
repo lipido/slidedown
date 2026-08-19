@@ -229,6 +229,43 @@ Los temas **solo sobreescriben tokens** (`--sd-*` definidos en `theme/tokens.css
 3. Sobreescribe los tokens que quieras (receta mínima de 10 en el sample `99-theme`).
 4. Enlaza el archivo en `index.html` y usa `theme: mi-tema` en el frontmatter.
 
+## Personalizar el aspecto de una presentación (sin tocar el core)
+
+Para **una presentación concreta** no hace falta crear/editar un tema: usa
+`custom.css` (en la raíz), que se carga al final y gana por cascada sobre
+`theme/*.css`.
+
+**Escoger un tema compartido** (en el frontmatter del deck):
+
+```markdown
+---
+theme: dark
+---
+```
+
+**Sobreescribir tokens** (fuente, color, radio...) en `custom.css`:
+
+```css
+[data-theme="dark"] {
+  --sd-font-heading: 'Georgia', serif;
+  --sd-accent: #c0532e;
+}
+```
+
+**Apuntar a una slide concreta** con su `id` (en la directiva de slide):
+
+```markdown
+<!-- slide: layout=title id=portada -->
+# Mi título
+```
+
+```css
+#portada h1 { color: var(--sd-accent); }
+#portada { background: #111; }
+```
+
+El `id` de una slide es opcional: ponlo solo si quieres hacerle una regla CSS.
+
 ## Samples (documentación funcional)
 
 | Sample | Muestra |
