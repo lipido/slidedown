@@ -32,23 +32,32 @@ O escribe el markdown inline en `index.html` y ábrelo con doble clic (sin servi
 ## Estructura
 
 ```
-slidedown/
-├── index.html            # Punto de entrada
-├── slides.md             # Contenido de la presentación
-├── theme/
-│   ├── tokens.css        # Design tokens (el "estilo" del tema)
-│   ├── base.css          # Estructura (no tocar para crear temas)
-│   ├── layouts.css       # Layouts y posicionamiento
-│   ├── transitions.css   # Transiciones y animaciones
-│   ├── diagrams.css      # Mermaid + flechas SVG
-│   ├── print.css         # Export PDF
-│   └── themes/           # Temas: light, dark, blueprint (plantilla)
-├── lib/
-│   ├── marked.min.js     # Parser markdown (vendored)
-│   ├── mermaid.min.js    # Diagramas (vendored, carga perezosa)
-│   └── slidedown.js      # El framework
-└── samples/              # Decks de ejemplo (funcionan como documentación)
+slidedown/                 # raíz = UNA presentación (lo que editas)
+├── index.html             # Punto de entrada
+├── slides.md              # Contenido de la presentación
+├── custom.css             # Overrides de aspecto de ESTA presentación
+├── img/                   # Imágenes de esta presentación
+└── framework/             # Reutilizable: NO se toca al presentar
+    ├── lib/
+    │   ├── marked.min.js  # Parser markdown (vendored)
+    │   ├── mermaid.min.js # Diagramas (vendored, carga perezosa)
+    │   └── slidedown.js   # El framework
+    ├── theme/
+    │   ├── tokens.css     # Design tokens (el "estilo" del tema)
+    │   ├── base.css       # Estructura (no tocar para crear temas)
+    │   ├── layouts.css    # Layouts y posicionamiento
+    │   ├── transitions.css# Transiciones y animaciones
+    │   ├── diagrams.css   # Mermaid + flechas SVG
+    │   ├── print.css      # Export PDF
+    │   └── themes/        # Temas: light, dark, blueprint (plantilla)
+    ├── samples/           # Decks de ejemplo (documentación funcional)
+    ├── test/              # Suite de verificación + generador de assets
+    ├── package.json       # npm test / gen-assets
+    └── environment.yml    # Entorno conda reproducible
 ```
+
+Al clonar para una presentación nueva, el `framework/` viene incluido: solo
+editas la raíz (`slides.md`, `custom.css`, `img/`).
 
 ## Sintaxis
 
@@ -281,18 +290,21 @@ Para la IA: los samples son el manual de uso. Léelos junto a `theme/tokens.css`
 
 ## Desarrollo y verificación
 
-La suite de verificación (Playwright) recorre el deck raíz y todos los samples,
-navega por cada diapositiva y comprueba estructura, geometría, diagramas y
-ausencia de errores de consola. Genera capturas en `test/screenshots/`.
+La suite de verificación (Playwright) recorre la presentación raíz y todos los
+samples, navega por cada diapositiva y comprueba estructura, geometría,
+diagramas y ausencia de errores de consola. Genera capturas en
+`framework/test/screenshots/`.
 
-Entorno reproducible con conda (nodejs incluido):
+Todo el tooling de desarrollo vive en `framework/`:
 
 ```bash
+cd framework
 conda env create -f environment.yml
 conda activate slidedown
 npm install
 npx playwright install chromium
 npm test          # ejecuta la suite (test/verify.mjs)
+npm run gen-assets  # regenera los placeholders (assets versionados en git)
 ```
 
 - `npm test` sale con código 0 si todo pasa, o distinto de 0 si algo falla.

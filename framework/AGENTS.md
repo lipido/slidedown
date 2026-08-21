@@ -11,9 +11,10 @@ Guía para agentes que trabajan en slidedown. Léela antes de tocar código.
 
 ## Verificación (siempre)
 
-- `conda activate slidedown && npm test` → suite Playwright que recorre todos los decks. **Debe quedar en verde.**
+- Desde `framework/`: `conda activate slidedown && npm test` → suite Playwright que recorre la presentación raíz y todos los samples. **Debe quedar en verde.**
 - Ejecútala tras cualquier cambio; es la red de seguridad de posicionamiento y timing.
 - `npm run gen-assets` regenera placeholders. Los assets se **versionan en git** (el clonado funciona sin internet).
+- La raíz del proyecto es UNA presentación (`slides.md`, `custom.css`, `img/`); el framework vive en `framework/` y no se toca al presentar.
 
 ## Arquitectura de render
 

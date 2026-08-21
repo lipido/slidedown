@@ -16,7 +16,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.resolve(__dirname, '..');
+// FRAMEWORK = framework/ (lib, theme, samples, test)
+const FRAMEWORK = path.resolve(__dirname, '..');
+// PRESENTATION = raíz del proyecto (slides.md, index.html, custom.css, img/)
+const PRESENTATION = path.resolve(FRAMEWORK, '..');
 const SHOTS_DIR = path.join(__dirname, 'screenshots');
 const PORT = 8923;
 
@@ -43,12 +46,19 @@ function serve() {
       let p = decodeURIComponent(req.url.split('?')[0]);
       if (p === '/') p = '/index.html';
       if (p.includes('..')) { res.writeHead(403); res.end(); return; }
-      const file = path.join(ROOT, p);
-      if (!file.startsWith(ROOT) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) {
+      // /framework/* -> framework/, el resto -> presentación (raíz del proyecto)
+      let base = PRESENTATION;
+      let rel = p;
+      if (p.startsWith('/framework/')) {
+        base = FRAMEWORK;
+        rel = p.slice('/framework'.length);
+      }
+      const file = path.join(base, rel);
+      if (!file.startsWith(base) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) {
         res.writeHead(404); res.end('not found'); return;
       }
       const ext = path.extname(file);
-      const types = { '.html': 'text/html', '.md': 'text/plain', '.css': 'text/css', '.js': 'text/javascript', '.svg': 'image/svg+xml' };
+      const types = { '.html': 'text/html', '.md': 'text/plain', '.css': 'text/css', '.js': 'text/javascript', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg' };
       res.writeHead(200, { 'Content-Type': types[ext] || 'application/octet-stream' });
       fs.createReadStream(file).pipe(res);
     });
@@ -58,13 +68,17 @@ function serve() {
 
 function findDecks() {
   const decks = [];
-  if (fs.existsSync(path.join(ROOT, 'slides.md'))) decks.push({ name: 'RAÍZ (slides.md)', url: `http://127.0.0.1:${PORT}/index.html` });
-  const samplesDir = path.join(ROOT, 'samples');
+  // presentación raíz (slides.md + index.html del proyecto)
+  if (fs.existsSync(path.join(PRESENTATION, 'slides.md'))) {
+    decks.push({ name: 'RAÍZ (slides.md)', url: `http://127.0.0.1:${PORT}/index.html` });
+  }
+  // samples del framework (framework/samples/*)
+  const samplesDir = path.join(FRAMEWORK, 'samples');
   if (fs.existsSync(samplesDir)) {
     for (const d of fs.readdirSync(samplesDir)) {
       const p = path.join(samplesDir, d);
       if (fs.statSync(p).isDirectory() && fs.existsSync(path.join(p, 'index.html'))) {
-        decks.push({ name: `samples/${d}`, url: `http://127.0.0.1:${PORT}/samples/${d}/index.html` });
+        decks.push({ name: `samples/${d}`, url: `http://127.0.0.1:${PORT}/framework/samples/${d}/index.html` });
       }
     }
   }
