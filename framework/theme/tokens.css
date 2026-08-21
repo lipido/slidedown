@@ -80,10 +80,10 @@
   --sd-font-body: 'Segoe UI', -apple-system, 'Helvetica Neue', Arial, sans-serif;
   --sd-font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
 
-  --sd-font-size-base: 24px;    /* Tamaño base del contenido */
-  --sd-h1-size: 64px;           /* Título de diapositiva principal */
-  --sd-h2-size: 44px;           /* Subtítulo */
-  --sd-h3-size: 32px;           /* Apartado dentro de una diapositiva */
+  --sd-font-size-base: clamp(14px, 1.9vw, 24px); /* Responsivo: se adapta al viewport y al auto-fit JS */
+  --sd-h1-size: clamp(32px, 4.2vw, 64px);       /* Título responsive */
+  --sd-h2-size: clamp(24px, 3.1vw, 44px);       /* Subtítulo responsive */
+  --sd-h3-size: clamp(18px, 2.2vw, 32px);       /* Apartado responsive */
 
   --sd-line-height: 1.5;        /* Interlineado del cuerpo */
   --sd-heading-line-height: 1.15; /* Interlineado de títulos */
@@ -119,6 +119,11 @@
 
   --sd-slide-width: 1280px;     /* Ancho de diseño de la diapositiva (16:9) */
   --sd-slide-height: 720px;     /* Alto de diseño de la diapositiva (16:9) */
+  --sd-content-max-h: calc(var(--sd-slide-height) - 2 * var(--sd-slide-padding)); /* Área útil ~592px */
+  --sd-img-max-h: 360px;        /* Altura máxima por defecto para imágenes (evita desborde, JS ajusta si aún excede) */
+  --sd-pre-max-h: 320px;        /* Altura máxima para bloques de código */
+  --sd-table-max-h: 340px;      /* Altura máxima para tablas */
+  --sd-content-scale: 1;        /* Escala auto-fit (JS la modifica si hay overflow) */
 
   /* ============================ DIAGRAMAS ============================ */
 

@@ -73,6 +73,9 @@ sd-deck { display: block; }
   width: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden; /* JS auto-fit evita scroll; si aún excede, se escala */
+  transform: scale(var(--sd-content-scale, 1));
+  transform-origin: top left;
 }
 
 /* ------------------------- tipografía ------------------------- */
@@ -122,8 +125,10 @@ sd-deck { display: block; }
   padding: var(--sd-space-unit);
   background: var(--sd-code-bg);
   border-radius: var(--sd-radius);
-  overflow: auto;
+  overflow: hidden; /* auto-fit evita scroll */
   line-height: 1.4;
+  max-height: var(--sd-pre-max-h);
+  max-width: 100%;
 }
 .sd-slide pre code { background: none; padding: 0; color: var(--sd-fg); font-size: .8em; }
 .sd-slide pre code.hljs { background: var(--sd-code-hljs-bg); color: var(--sd-code-hljs-fg); }
@@ -137,7 +142,11 @@ sd-deck { display: block; }
 .sd-slide table {
   border-collapse: collapse;
   width: 100%;
+  max-width: 100%;
   margin: 0 0 var(--sd-space-unit) 0;
+  max-height: var(--sd-table-max-h);
+  overflow: hidden;
+  font-size: 0.9em;
 }
 .sd-slide th, .sd-slide td {
   border: 1px solid var(--sd-border);
@@ -150,17 +159,21 @@ sd-deck { display: block; }
 /* ------------------------- imágenes ------------------------- */
 .sd-slide img {
   max-width: 100%;
+  max-height: var(--sd-img-max-h);
   height: auto;
+  width: auto;
   display: block;
   border-radius: var(--sd-radius);
+  object-fit: contain;
+  flex-shrink: 1;
 }
 .sd-slide img.img-center { margin-left: auto; margin-right: auto; }
 .sd-slide img.img-shadow { box-shadow: var(--sd-shadow-md); }
-.sd-slide img.img-w-25 { width: 25%; }
-.sd-slide img.img-w-40 { width: 40%; }
-.sd-slide img.img-w-50 { width: 50%; }
-.sd-slide img.img-w-60 { width: 60%; }
-.sd-slide img.img-w-80 { width: 80%; }
+.sd-slide img.img-w-25 { width: 25%; max-height: var(--sd-img-max-h); }
+.sd-slide img.img-w-40 { width: 40%; max-height: var(--sd-img-max-h); }
+.sd-slide img.img-w-50 { width: 50%; max-height: var(--sd-img-max-h); }
+.sd-slide img.img-w-60 { width: 60%; max-height: var(--sd-img-max-h); }
+.sd-slide img.img-w-80 { width: 80%; max-height: var(--sd-img-max-h); }
 .sd-slide img.img-full {
   width: 100%;
   height: 100%;

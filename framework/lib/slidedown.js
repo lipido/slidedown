@@ -511,8 +511,8 @@
   }
 
   /* Agrupa las columnas (.col) hermanas consecutivas en un contenedor
-     .sd-cols, de modo que el grid de columnas no afecte a otros elementos
-     (títulos, párrafos) que estén fuera de las columnas. */
+      .sd-cols, de modo que el grid de columnas no afecte a otros elementos
+      (títulos, párrafos) que estén fuera de las columnas. */
   function groupColumns(slide) {
     var content = slide.querySelector('.sd-content');
     if (!content) return;
@@ -532,6 +532,36 @@
       content.insertBefore(wrap, ref);
       cols.forEach(function (c) { wrap.appendChild(c); });
     });
+  }
+
+  /* --------------------------- auto-fit sin scroll --------------------------- */
+  // Evita scroll: si el contenido desborda la altura útil (720 - padding), lo escala
+  function fitSlide(slide) {
+    if (!slide || slide.closest('.sd-overview')) return;
+    var content = slide.querySelector('.sd-content');
+    if (!content) return;
+    // reset
+    content.style.removeProperty('--sd-content-scale');
+    content.style.transform = '';
+    content.style.width = '';
+    // forzar reflow
+    void content.offsetHeight;
+    var style = getComputedStyle(slide);
+    var padTop = parseFloat(style.paddingTop) || 0;
+    var padBottom = parseFloat(style.paddingBottom) || 0;
+    var available = slide.clientHeight - padTop - padBottom;
+    if (available <= 0) return;
+    var needed = content.scrollHeight;
+    if (needed > available + 2) {
+      var scale = Math.max(0.4, available / needed);
+      content.style.setProperty('--sd-content-scale', String(scale));
+      content.style.transform = 'scale(' + scale + ')';
+      content.style.transformOrigin = 'top left';
+      content.style.width = (100 / scale) + '%';
+    }
+  }
+  function fitAllSlides(root) {
+    root.querySelectorAll('.sd-slide').forEach(fitSlide);
   }
 
   /* --------------------------- <sd-diagram> --------------------------- */
@@ -572,6 +602,7 @@
     _redrawSlide() {
       var slide = this.closest('.sd-slide');
       if (slide && window.__sdRedrawSlide) window.__sdRedrawSlide(slide);
+      if (slide && window.__sdFitSlide) window.__sdFitSlide(slide);
     }
     async refresh() {
       this.innerHTML = '';
@@ -698,6 +729,9 @@
       this._onResize = function () {
         var s = Math.min(window.innerWidth / SLIDE_W, window.innerHeight / SLIDE_H);
         self._frame.style.setProperty('--sd-scale', String(s));
+        // Re-ajustar auto-fit al cambiar tamaño de ventana
+        fitAllSlides(self._frame);
+        if (self._slides[self._index]) fitSlide(self._slides[self._index]);
       };
       window.addEventListener('keydown', this._onKey);
       window.addEventListener('hashchange', this._onHash);
@@ -719,7 +753,10 @@
       this.querySelectorAll('.sd-slide.sd-enter, .sd-slide.sd-leaving').forEach(function (s) {
         s.classList.remove('sd-enter', 'sd-leaving');
       });
-      if (!on && this._slides[this._index]) this._applyFragments(this._slides[this._index]);
+      if (!on && this._slides[this._index]) {
+        this._applyFragments(this._slides[this._index]);
+        fitSlide(this._slides[this._index]);
+      }
     }
     toggleOverview() { this.setOverview(!this._overview); }
 
@@ -773,6 +810,15 @@
           console.warn('[slidedown] highlight.js no disponible:', e);
         }
       }
+
+      // Auto-fit responsive: evita scroll, escala si desborda
+      fitAllSlides(this._frame);
+      // Re-ajustar al cargar imágenes (cambian altura)
+      this._slides.forEach(function (s) {
+        s.querySelectorAll('img').forEach(function (img) {
+          if (!img.complete) img.addEventListener('load', function () { fitSlide(s); redrawSlide(s); }, { once: true });
+        });
+      });
 
       var initial = parseInt(location.hash.slice(1), 10);
       if (isNaN(initial)) initial = 0;
@@ -886,6 +932,8 @@
         }
       }
       next.classList.add('sd-active');
+      // Ajustar contenido para que quepa sin scroll
+      fitSlide(next);
       if (prev && !noTrans) {
         next.classList.add('sd-enter');
         var enterDone = function () { next.classList.remove('sd-enter'); };
@@ -952,4 +1000,6 @@
     customElements.define('sd-diagram', SdDiagram);
   }
   window.__sdRedrawSlide = redrawSlide;
+  window.__sdFitSlide = fitSlide;
+  window.__sdFitAll = fitAllSlides;
 })();

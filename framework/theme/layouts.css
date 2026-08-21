@@ -6,7 +6,7 @@
 /* ------------------------ columnas (.col) ------------------------ */
 /* Las columnas se agrupan en .sd-cols (data-count=N) por el JS, de modo
    que el grid no afecta a títulos/párrafos que estén fuera de ellas. */
-.sd-cols { display: grid; gap: var(--sd-gap); width: 100%; }
+.sd-cols { display: grid; gap: var(--sd-gap); width: 100%; min-height: 0; overflow: hidden; }
 .sd-cols[data-count="2"] { grid-template-columns: 1fr 1fr; }
 .sd-cols[data-count="3"] { grid-template-columns: 1fr 1fr 1fr; }
 .sd-cols[data-count="4"] { grid-template-columns: 1fr 1fr 1fr 1fr; }
@@ -14,7 +14,7 @@
    flechas ::: arrow ::: que estén dentro de una columna se posicionan y se
    anclan a ESA columna, no a la diapositiva completa. Así no invaden el
    título ni otras columnas. */
-.sd-cols .col { min-width: 0; position: relative; }
+.sd-cols .col { min-width: 0; min-height: 0; position: relative; overflow: hidden; display: flex; flex-direction: column; }
 
 /* ---------------------- layouts de contenido ---------------------- */
 /* default: contenido arriba-izquierda */
