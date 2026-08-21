@@ -536,15 +536,17 @@
 
   /* --------------------------- auto-fit sin scroll --------------------------- */
   // Evita scroll: si el contenido desborda la altura útil (720 - padding), lo escala
+  // Usa `zoom` (afecta layout, evita recorte por overflow:hidden) + fallback transform
   function fitSlide(slide) {
     if (!slide || slide.closest('.sd-overview')) return;
     var content = slide.querySelector('.sd-content');
     if (!content) return;
     // reset
     content.style.removeProperty('--sd-content-scale');
+    content.style.zoom = '';
     content.style.transform = '';
     content.style.width = '';
-    // forzar reflow
+    content.style.height = '';
     void content.offsetHeight;
     var style = getComputedStyle(slide);
     var padTop = parseFloat(style.paddingTop) || 0;
@@ -553,11 +555,17 @@
     if (available <= 0) return;
     var needed = content.scrollHeight;
     if (needed > available + 2) {
-      var scale = Math.max(0.4, available / needed);
+      var scale = Math.max(0.45, available / needed);
       content.style.setProperty('--sd-content-scale', String(scale));
-      content.style.transform = 'scale(' + scale + ')';
-      content.style.transformOrigin = 'top left';
-      content.style.width = (100 / scale) + '%';
+      // zoom afecta layout (Chrome/Playwright), evita truncado por transform
+      if ('zoom' in content.style) {
+        content.style.zoom = String(scale);
+      } else {
+        content.style.transform = 'scale(' + scale + ')';
+        content.style.transformOrigin = 'top left';
+        content.style.width = (100 / scale) + '%';
+        content.style.height = (100 / scale) + '%';
+      }
     }
   }
   function fitAllSlides(root) {
@@ -819,6 +827,11 @@
           if (!img.complete) img.addEventListener('load', function () { fitSlide(s); redrawSlide(s); }, { once: true });
         });
       });
+      // Re-ajustar tras cargar fuentes y tras un tick (asegura layout estable)
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(function () { fitAllSlides(self._frame); if (self._slides[self._index]) fitSlide(self._slides[self._index]); });
+      }
+      setTimeout(function () { fitAllSlides(self._frame); if (self._slides[self._index]) fitSlide(self._slides[self._index]); }, 120);
 
       var initial = parseInt(location.hash.slice(1), 10);
       if (isNaN(initial)) initial = 0;

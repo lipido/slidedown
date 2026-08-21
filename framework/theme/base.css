@@ -73,9 +73,7 @@ sd-deck { display: block; }
   width: 100%;
   display: flex;
   flex-direction: column;
-  overflow: hidden; /* JS auto-fit evita scroll; si aún excede, se escala */
-  transform: scale(var(--sd-content-scale, 1));
-  transform-origin: top left;
+  overflow: hidden; /* JS auto-fit evita scroll; si aún excede, se escala vía zoom */
 }
 
 /* ------------------------- tipografía ------------------------- */

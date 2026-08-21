@@ -284,6 +284,7 @@ El `id` de una slide es opcional: ponlo solo si quieres hacerle una regla CSS.
 | `samples/02-diagrams` | Mermaid + infografía con flechas SVG |
 | `samples/03-textboxes` | Colocación libre de cajas |
 | `samples/04-notes` | Notas del orador |
+| `samples/05-overflow` | Contenido denso que desborda: el auto-fit escala para que **todo cabe** sin scroll ni truncado |
 | `samples/99-theme` | Cómo crear un tema (con receta) |
 
 Para la IA: los samples son el manual de uso. Léelos junto a `theme/tokens.css`.

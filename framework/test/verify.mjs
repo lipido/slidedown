@@ -288,6 +288,44 @@ async function inspectSlide(page, idx, total) {
       });
     });
 
+    // --- Truncado (todo cabe) — sagrado ---
+    // OJO: el marco va escalado (--sd-scale), así que getBoundingClientRect()
+    // devuelve px de pantalla y clientHeight/scrollHeight px de layout.
+    // Convertimos todo a px de layout con ratio = sr.height / clientHeight.
+    results.trunc = { trunc: false, lastOut: false, imgOut: false, scale: 1, needed: 0, available: 0 };
+    const content = s.querySelector('.sd-content');
+    if (content) {
+      const cs = getComputedStyle(s);
+      const sr = s.getBoundingClientRect();
+      const ratio = s.clientHeight ? (sr.height / s.clientHeight) : 1;
+      const availLayout = s.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+      const neededLayout = content.scrollHeight; // layout px, ya incluye efecto de zoom en hijos
+      // altura visual del contenido llevada a px de layout (rect está en pantalla)
+      const neededVisualLayout = content.getBoundingClientRect().height / ratio / (content.style.zoom ? parseFloat(content.style.zoom) : 1);
+      let scale = 1;
+      const zoomVal = content.style.zoom || getComputedStyle(content).zoom;
+      if (zoomVal && zoomVal !== 'normal' && !isNaN(parseFloat(zoomVal))) scale = parseFloat(zoomVal);
+      else {
+        const v = content.style.getPropertyValue('--sd-content-scale') || getComputedStyle(content).getPropertyValue('--sd-content-scale');
+        if (v && !isNaN(parseFloat(v))) scale = parseFloat(v);
+      }
+      results.trunc.needed = Math.round(neededVisualLayout);
+      results.trunc.available = Math.round(availLayout);
+      results.trunc.scale = Number(scale.toFixed(2));
+      // Trunc si aun tras el zoom el contenido lógico no cabe en el área útil
+      results.trunc.trunc = neededVisualLayout > availLayout + 4;
+      const last = content.lastElementChild;
+      if (last) {
+        const r = last.getBoundingClientRect();
+        const padBottomScreen = parseFloat(cs.paddingBottom) * ratio;
+        results.trunc.lastOut = r.bottom > sr.bottom - padBottomScreen + 4;
+      }
+      s.querySelectorAll('img').forEach(img => {
+        const r = img.getBoundingClientRect();
+        if (r.bottom > sr.bottom + 2 || r.right > sr.right + 2) results.trunc.imgOut = true;
+      });
+    }
+
     results.boxes = results.boxes.map(({ el, ...rest }) => rest);
 
     return results;
@@ -336,6 +374,8 @@ async function inspectSlide(page, idx, total) {
       check(!im.boxOverflow, name + ' — imagen dentro de caja sin desborde', im.src || '(sin src)');
     }
   }
+  // Sagrada: todo cabe sin truncado (visual: nada sale de la diapositiva)
+  check(!r.trunc.lastOut && !r.trunc.imgOut, name + ' — sin truncado (todo cabe)', `scale ${r.trunc.scale} needed ${r.trunc.needed} avail ${r.trunc.available}${r.trunc.lastOut?' lastOut':''}${r.trunc.imgOut?' imgOut':''}`);
 }
 
 async function run() {
@@ -396,6 +436,18 @@ async function run() {
         if (!window.hljs) return false;
         return Array.from(codes).every((c) => c.classList.contains('hljs'));
       }, null, { timeout: 8000 }).catch(() => {});
+      // esperar a que auto-fit termine (todo cabe sin truncado) — unidades consistentes
+      await page.waitForFunction(() => {
+        const s = document.querySelector('.sd-slide.sd-active');
+        if (!s) return true;
+        const c = s.querySelector('.sd-content');
+        if (!c) return true;
+        const cs = getComputedStyle(s);
+        const sr = s.getBoundingClientRect();
+        const ratio = s.clientHeight ? (sr.height / s.clientHeight) : 1;
+        const availScreen = (s.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom)) * ratio;
+        return c.getBoundingClientRect().height <= availScreen + 4;
+      }, null, { timeout: 5000 }).catch(() => {});
       // pequeño margen para que el listener 'load' redibuje las flechas
       await page.waitForTimeout(60);
       await inspectSlide(page, i, total);
@@ -427,6 +479,18 @@ async function run() {
       if (codes.length && !Array.from(codes).every((c) => c.classList.contains('hljs'))) return false;
       return true;
     }, null, { timeout: 20000 }).catch(() => {});
+    // esperar auto-fit para PDF (unidades consistentes pantalla/layout)
+    await pdfPage.waitForFunction(() => {
+      return Array.from(document.querySelectorAll('.sd-slide')).every(s => {
+        const c = s.querySelector('.sd-content');
+        if (!c) return true;
+        const cs = getComputedStyle(s);
+        const sr = s.getBoundingClientRect();
+        const ratio = s.clientHeight ? (sr.height / s.clientHeight) : 1;
+        const availScreen = (s.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom)) * ratio;
+        return c.getBoundingClientRect().height <= availScreen + 4;
+      });
+    }, null, { timeout: 10000 }).catch(() => {});
     await pdfPage.waitForTimeout(120);
     await pdfPage.pdf({ path: pdfOut, width: '1280px', height: '720px', printBackground: true, preferCSSPageSize: true, margin: { top: '0', right: '0', bottom: '0', left: '0' } });
     const pdfBytes = fs.readFileSync(pdfOut);

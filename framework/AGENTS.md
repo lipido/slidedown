@@ -30,7 +30,13 @@ Guía para agentes que trabajan en slidedown. Léela antes de tocar código.
 
 ## Timing asíncrono (trampa frecuente)
 
-- Las flechas se dibujan al montar, pero las cajas cambian de tamaño al cargar imágenes o renderizar mermaid. Cualquier contenido asíncrono que afecte al tamaño DEBE redibujar las flechas (patrón listener / `redrawSlide`).
+- Las flechas se dibujan al montar, pero las cajas cambian de tamaño al cargar imágenes o renderizar mermaid. Cualquier contenido asíncrono que afecte al tamaño DEBE redibujar las flechas (patrón listener / `redrawSlide`) y re-ajustar (`fitSlide`).
+
+## "Todo cabe" (regla sagrada)
+
+- Nada se trunca nunca: si el contenido excede el área útil (720 − padding), `fitSlide` escala `.sd-content` con `zoom` (afecta layout; fallback `transform`). Se re-aplica al montar, cargar imágenes, renderizar mermaid, cambiar slide, redimensionar y salir de overview.
+- La suite verifica visualmente (rects en pantalla) que nada sale de la diapositiva: check "sin truncado (todo cabe)" en `test/verify.mjs`. El sample `samples/05-overflow/` contiene slides diseñadas para desbordar.
+- Trampa de unidades: el marco va escalado (`--sd-scale`); `getBoundingClientRect()` devuelve px de pantalla y `clientHeight/scrollHeight` px de layout. Convertir con `ratio = rect.height / clientHeight` antes de comparar.
 
 ## Theming
 
@@ -43,3 +49,4 @@ Guía para agentes que trabajan en slidedown. Léela antes de tocar código.
 - SVG desplazado / flechas fuera de las cajas → contenedor de referencia.
 - Cajas/flechas pisando el título → header/canvas + columnas posicionadas.
 - Flecha colapsada por timing → redibujar al terminar mermaid.
+- Contenido truncado abajo → auto-fit `zoom` en `.sd-content` (el `transform: scale` NO reduce el layout y `overflow:hidden` recorta).
