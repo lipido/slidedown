@@ -34,6 +34,18 @@
   --sd-border: #262b38;
   --sd-code-bg: #161a24;
   --sd-code-fg: #e4a4f2;
+  --sd-code-hljs-bg: #161a24;
+  --sd-code-hljs-fg: #abb2bf;
+  --sd-code-comment: #5c6370;
+  --sd-code-keyword: #c678dd;
+  --sd-code-title: #61aeee;
+  --sd-code-attr: #d19a66;
+  --sd-code-string: #98c379;
+  --sd-code-builtin: #e6c07b;
+  --sd-code-name: #e06c75;
+  --sd-code-meta: #61aeee;
+  --sd-code-section: #e06c75;
+  --sd-code-bullet: #d19a66;
 
   /* -- Gradientes -- */
   --sd-gradient-1: #4a4abf;

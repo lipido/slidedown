@@ -47,6 +47,18 @@
   /* -- Código -- */
   --sd-code-bg: #f0f1f6;        /* Fondo de bloques de código */
   --sd-code-fg: #b12b83;        /* Color de texto en línea de código */
+  --sd-code-hljs-bg: #f0f1f6;   /* Fondo base de highlight.js (sincronizado con --sd-code-bg) */
+  --sd-code-hljs-fg: #24292e;   /* Color base de highlight.js */
+  --sd-code-comment: #6a737d;   /* Comentarios */
+  --sd-code-keyword: #d73a49;   /* Keywords, doctag, formula */
+  --sd-code-title: #6f42c1;     /* Títulos de funciones/clases */
+  --sd-code-attr: #005cc5;      /* Atributos, números, literales */
+  --sd-code-string: #032f62;    /* Strings, regexp, adiciones */
+  --sd-code-builtin: #e36209;   /* Built-ins, símbolos */
+  --sd-code-name: #22863a;      /* Nombres de tags, quotes */
+  --sd-code-meta: #6a737d;      /* Meta */
+  --sd-code-section: #005cc5;   /* Secciones */
+  --sd-code-bullet: #735c0f;    /* Bullets */
 
   /* -- Gradientes (layout "section") -- */
   --sd-gradient-1: #5b5bd6;     /* Inicio del degradado de sección */

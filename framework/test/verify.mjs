@@ -386,6 +386,16 @@ async function run() {
         const imgs = Array.from(s.querySelectorAll('img'));
         return imgs.every((i) => i.complete);
       }, null, { timeout: 10000 }).catch(() => {});
+      // esperar a que highlight.js termine (carga perezosa)
+      await page.waitForFunction(() => {
+        const s = document.querySelector('.sd-slide.sd-active');
+        if (!s) return true;
+        const codes = s.querySelectorAll('pre code');
+        if (!codes.length) return true;
+        // si no hay hljs aún, puede que no haya código que resaltar; esperar a que cargue o timeout
+        if (!window.hljs) return false;
+        return Array.from(codes).every((c) => c.classList.contains('hljs'));
+      }, null, { timeout: 8000 }).catch(() => {});
       // pequeño margen para que el listener 'load' redibuje las flechas
       await page.waitForTimeout(60);
       await inspectSlide(page, i, total);
@@ -411,7 +421,11 @@ async function run() {
     await pdfPage.waitForFunction(() => {
       const ds = document.querySelectorAll('sd-diagram[type="mermaid"]');
       if (ds.length && !Array.from(ds).every((d) => d.dataset.rendered === '1' || !!d.querySelector('.sd-diagram-error'))) return false;
-      return Array.from(document.querySelectorAll('img')).every((i) => i.complete);
+      if (!Array.from(document.querySelectorAll('img')).every((i) => i.complete)) return false;
+      const codes = document.querySelectorAll('pre code');
+      if (codes.length && !window.hljs) return false;
+      if (codes.length && !Array.from(codes).every((c) => c.classList.contains('hljs'))) return false;
+      return true;
     }, null, { timeout: 20000 }).catch(() => {});
     await pdfPage.waitForTimeout(120);
     await pdfPage.pdf({ path: pdfOut, width: '1280px', height: '720px', printBackground: true, preferCSSPageSize: true, margin: { top: '0', right: '0', bottom: '0', left: '0' } });

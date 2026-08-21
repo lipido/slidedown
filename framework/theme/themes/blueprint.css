@@ -35,6 +35,18 @@
   --sd-border: #24466b;
   --sd-code-bg: #0d2744;
   --sd-code-fg: #56c8a8;
+  --sd-code-hljs-bg: #0d2744;
+  --sd-code-hljs-fg: #d9e6f2;
+  --sd-code-comment: #7d94ad;
+  --sd-code-keyword: #f6c945;
+  --sd-code-title: #56c8a8;
+  --sd-code-attr: #f6c945;
+  --sd-code-string: #4ad295;
+  --sd-code-builtin: #d9a4ff;
+  --sd-code-name: #f6c945;
+  --sd-code-meta: #7d94ad;
+  --sd-code-section: #f6c945;
+  --sd-code-bullet: #56c8a8;
 
   --sd-gradient-1: #0f2a4d;
   --sd-gradient-2: #143a63;

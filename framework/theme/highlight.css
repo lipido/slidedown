@@ -1,0 +1,124 @@
+/* ==========================================================================
+   SLIDEDOWN — HIGHLIGHT.JS (código)
+   Tema de resaltado basado en tokens --sd-code-*.
+   - Light: paleta github-light
+   - Dark: paleta atom-one-dark (tokens sobreescritos en themes/dark.css)
+   Consume solo tokens, no colores a pelo.
+   ========================================================================== */
+
+.sd-slide pre code.hljs {
+  display: block;
+  overflow-x: auto;
+  padding: 1em;
+  background: var(--sd-code-hljs-bg);
+  color: var(--sd-code-hljs-fg);
+}
+
+/* Base hljs sin clase extra */
+.hljs {
+  color: var(--sd-code-hljs-fg);
+  background: var(--sd-code-hljs-bg);
+}
+
+/* Comentarios */
+.hljs-comment,
+.hljs-quote,
+.hljs-code,
+.hljs-formula {
+  color: var(--sd-code-comment);
+  font-style: italic;
+}
+
+/* Keywords */
+.hljs-doctag,
+.hljs-keyword,
+.hljs-meta .hljs-keyword,
+.hljs-template-tag,
+.hljs-template-variable,
+.hljs-type,
+.hljs-variable.language_ {
+  color: var(--sd-code-keyword);
+}
+
+/* Títulos */
+.hljs-title,
+.hljs-title.class_,
+.hljs-title.class_.inherited__,
+.hljs-title.function_ {
+  color: var(--sd-code-title);
+}
+
+/* Atributos / constantes / números */
+.hljs-attr,
+.hljs-attribute,
+.hljs-literal,
+.hljs-meta,
+.hljs-number,
+.hljs-operator,
+.hljs-variable,
+.hljs-selector-attr,
+.hljs-selector-class,
+.hljs-selector-id {
+  color: var(--sd-code-attr);
+}
+
+/* Strings */
+.hljs-regexp,
+.hljs-string,
+.hljs-meta .hljs-string {
+  color: var(--sd-code-string);
+}
+
+.hljs-built_in,
+.hljs-symbol {
+  color: var(--sd-code-builtin);
+}
+
+.hljs-name,
+.hljs-selector-tag,
+.hljs-selector-pseudo {
+  color: var(--sd-code-name);
+}
+
+.hljs-subst {
+  color: var(--sd-code-hljs-fg);
+}
+
+.hljs-section {
+  color: var(--sd-code-section);
+  font-weight: bold;
+}
+
+.hljs-bullet {
+  color: var(--sd-code-bullet);
+}
+
+.hljs-emphasis {
+  color: var(--sd-code-hljs-fg);
+  font-style: italic;
+}
+
+.hljs-strong {
+  color: var(--sd-code-hljs-fg);
+  font-weight: bold;
+}
+
+.hljs-addition {
+  color: #22863a;
+  background-color: #f0fff4;
+}
+
+.hljs-deletion {
+  color: #b31d28;
+  background-color: #ffeef0;
+}
+
+/* Ajuste para tema oscuro: adiciones/borrados legibles sobre fondo oscuro */
+[data-theme="dark"] .hljs-addition {
+  color: #98c379;
+  background-color: rgba(152, 195, 121, .15);
+}
+[data-theme="dark"] .hljs-deletion {
+  color: #e06c75;
+  background-color: rgba(224, 108, 117, .15);
+}

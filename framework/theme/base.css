@@ -126,6 +126,7 @@ sd-deck { display: block; }
   line-height: 1.4;
 }
 .sd-slide pre code { background: none; padding: 0; color: var(--sd-fg); font-size: .8em; }
+.sd-slide pre code.hljs { background: var(--sd-code-hljs-bg); color: var(--sd-code-hljs-fg); }
 
 .sd-slide hr {
   border: none;

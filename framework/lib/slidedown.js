@@ -449,6 +449,35 @@
     renderArrows(slide);
   }
 
+  /* ---------------------- highlight (perezoso, 190 lenguajes) ---------------------- */
+  function ensureHighlight() {
+    return new Promise(function (resolve, reject) {
+      if (window.hljs && window.hljs.highlightElement) return resolve(window.hljs);
+      var s = document.createElement('script');
+      s.src = LIB_DIR + 'highlight.min.js';
+      s.onload = function () {
+        // Carga el bundle de lenguajes tras el core
+        var s2 = document.createElement('script');
+        s2.src = LIB_DIR + 'highlight-languages.min.js';
+        s2.onload = function () { resolve(window.hljs); };
+        s2.onerror = function () {
+          // Si falla el paquete de lenguajes, el core sigue siendo usable (highlight auto-detect limitado)
+          resolve(window.hljs);
+        };
+        document.head.appendChild(s2);
+      };
+      s.onerror = function () { reject(new Error('No se pudo cargar lib/highlight.min.js')); };
+      document.head.appendChild(s);
+    });
+  }
+  function highlightAll(root) {
+    if (!window.hljs || !window.hljs.highlightElement) return;
+    root.querySelectorAll('pre code').forEach(function (block) {
+      if (block.classList.contains('hljs')) return;
+      try { window.hljs.highlightElement(block); } catch (e) {}
+    });
+  }
+
   /* ---------------------- mermaid (perezoso) ---------------------- */
   function ensureMermaid() {
     return new Promise(function (resolve, reject) {
@@ -733,6 +762,17 @@
         renderArrows(el);
       });
       this._fragStats = this._slides.map(function (el) { return el.querySelectorAll('.fragment').length; });
+
+      // Resaltado de sintaxis (perezoso): solo si hay bloques de código
+      var hasCode = this._slides.some(function (el) { return el.querySelector('pre code'); });
+      if (hasCode) {
+        try {
+          await ensureHighlight();
+          highlightAll(this._frame);
+        } catch (e) {
+          console.warn('[slidedown] highlight.js no disponible:', e);
+        }
+      }
 
       var initial = parseInt(location.hash.slice(1), 10);
       if (isNaN(initial)) initial = 0;
