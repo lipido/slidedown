@@ -395,6 +395,52 @@ async function run() {
     check(consoleErrors.length === 0, `— sin errores de consola (${total} diapos)`, consoleErrors.length ? consoleErrors[0] : '');
   }
 
+  // ---- verificación PDF vector (pixel-perfect con texto) ----
+  console.log('\n=== PDF export (vector) ===');
+  try {
+    const pdfOut = path.join(__dirname, 'pdf', 'verify-vector.pdf');
+    fs.mkdirSync(path.dirname(pdfOut), { recursive: true });
+    const pdfPage = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+    const rootUrl = `http://127.0.0.1:${PORT}/index.html`;
+    await pdfPage.goto(rootUrl, { waitUntil: 'load' });
+    await pdfPage.waitForFunction(() => document.querySelectorAll('.sd-slide').length > 0, null, { timeout: 15000 });
+    await pdfPage.evaluate(() => {
+      const d = document.querySelector('sd-deck');
+      if (d) d._slides.forEach((s) => s.querySelectorAll('.fragment').forEach((f) => f.classList.add('sd-revealed')));
+    });
+    await pdfPage.waitForFunction(() => {
+      const ds = document.querySelectorAll('sd-diagram[type="mermaid"]');
+      if (ds.length && !Array.from(ds).every((d) => d.dataset.rendered === '1' || !!d.querySelector('.sd-diagram-error'))) return false;
+      return Array.from(document.querySelectorAll('img')).every((i) => i.complete);
+    }, null, { timeout: 20000 }).catch(() => {});
+    await pdfPage.waitForTimeout(120);
+    await pdfPage.pdf({ path: pdfOut, width: '1280px', height: '720px', printBackground: true, preferCSSPageSize: true, margin: { top: '0', right: '0', bottom: '0', left: '0' } });
+    const pdfBytes = fs.readFileSync(pdfOut);
+    check(pdfBytes.length > 5000, 'PDF vector generado', `${(pdfBytes.length / 1024).toFixed(0)} KB`);
+    check(pdfBytes.subarray(0, 4).toString() === '%PDF', 'PDF vector cabecera %PDF');
+    try {
+      const { PDFDocument } = await import('pdf-lib');
+      const doc = await PDFDocument.load(pdfBytes);
+      const nPages = doc.getPageCount();
+      const expected = await pdfPage.evaluate(() => document.querySelectorAll('.sd-slide').length);
+      check(nPages === expected, 'PDF vector nº páginas', `${nPages} vs ${expected} slides`);
+      if (nPages > 0) {
+        const p0 = doc.getPage(0);
+        const w = p0.getWidth(), h = p0.getHeight();
+        // 1280px CSS a 96dpi = 960pt (72dpi PDF). Chromium convierte px→pt así.
+        // Aceptar ambos si el usuario ajusta @page, pero exigir 16:9.
+        const dimOk = (Math.abs(w - 960) < 2 && Math.abs(h - 540) < 2) || (Math.abs(w - 1280) < 2 && Math.abs(h - 720) < 2);
+        const ratioOk = Math.abs(w / h - 16 / 9) < 0.01;
+        check(dimOk && ratioOk, 'PDF vector tamaño página 1280×720 px (960×540 pt)', `${w.toFixed(0)}×${h.toFixed(0)}`);
+      }
+    } catch (e) {
+      ko('PDF vector inspección con pdf-lib', e.message);
+    }
+    await pdfPage.close();
+  } catch (e) {
+    ko('PDF vector export', e.message);
+  }
+
   await browser.close();
   server.close();
 

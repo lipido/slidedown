@@ -2,13 +2,15 @@
 node_modules/
 package-lock.json
 
-# Artefactos de la suite de tests (framework/test/)
+# Artefactos de la suite de tests y export PDF (framework/test/)
 test/screenshots/
 framework/test/screenshots/
 playwright-report/
 framework/playwright-report/
 test-results/
 framework/test-results/
+framework/test/pdf/
+*.pdf
 
 # Logs y temporales
 *.log

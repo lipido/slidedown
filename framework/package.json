@@ -6,9 +6,12 @@
   "type": "module",
   "scripts": {
     "test": "node test/verify.mjs",
+    "pdf": "node test/export-pdf.mjs",
+    "pdf:raster": "node test/export-pdf.mjs --raster",
     "gen-assets": "node test/gen-assets.mjs"
   },
   "devDependencies": {
+    "pdf-lib": "^1.17.1",
     "playwright": "^1.62.0"
   }
 }

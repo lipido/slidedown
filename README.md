@@ -227,7 +227,7 @@ graph TD
 | `O` | Resumen de miniaturas |
 | `T` | Cambiar tema (light/dark/blueprint) |
 | `N` | Panel de notas |
-| `P` | Exportar PDF |
+| `P` | Exportar PDF (impresión rápida del navegador) |
 
 ## Crear un tema nuevo
 
@@ -288,12 +288,35 @@ El `id` de una slide es opcional: ponlo solo si quieres hacerle una regla CSS.
 
 Para la IA: los samples son el manual de uso. Léelos junto a `theme/tokens.css`.
 
+## Exportar a PDF pixel-perfect (con texto)
+
+El botón `P` / `Ctrl+P` es una impresión rápida del navegador. Para un PDF
+que **replique lo que se ve en pantalla** (1280×720 pt por diapositiva,
+fragmentos revelados, texto vectorial seleccionable) usa el exportador del
+framework — mismo CSS de impresión (`theme/print.css`) pero renderizado de
+forma determinística con Playwright:
+
+```bash
+cd framework
+conda activate slidedown
+npm install                 # instala playwright + pdf-lib
+npx playwright install chromium
+npm run pdf                 # → slides.pdf en la raíz (presentación)
+npm run pdf -- samples/02-diagrams --out /tmp/diagramas.pdf
+npm run pdf:raster          # modo raster (screenshots PNG, píxel literal)
+```
+
+* Vector (por defecto): `page.pdf` con `printBackground:true` y `@page 1280×720` — texto y SVG como vectores.
+* Raster (`--raster`): screenshots de cada `.sd-slide` a `1280×720` montados con `pdf-lib` — píxel literal, sin texto seleccionable.
+* Requiere el mismo entorno que `npm test` (`framework/environment.yml` → `nodejs=22` vía conda).
+
 ## Desarrollo y verificación
 
 La suite de verificación (Playwright) recorre la presentación raíz y todos los
 samples, navega por cada diapositiva y comprueba estructura, geometría,
 diagramas y ausencia de errores de consola. Genera capturas en
-`framework/test/screenshots/`.
+`framework/test/screenshots/` y verifica el export PDF vector en
+`framework/test/pdf/`.
 
 Todo el tooling de desarrollo vive en `framework/`:
 
@@ -303,7 +326,8 @@ conda env create -f environment.yml
 conda activate slidedown
 npm install
 npx playwright install chromium
-npm test          # ejecuta la suite (test/verify.mjs)
+npm test          # ejecuta la suite (test/verify.mjs) — incluye check del PDF
+npm run pdf       # exporta la presentación raíz a slides.pdf (vector)
 npm run gen-assets  # regenera los placeholders (assets versionados en git)
 ```
 

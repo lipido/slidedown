@@ -3,6 +3,8 @@
    Cada diapositiva = una página de 1280x720 (16:9).
    - En Chrome/Edge: Ctrl+P o el botón "PDF" del reproductor.
    - En Firefox la página puede salir como A4; cambia @page si lo prefieres.
+   - El export vector (framework/test/export-pdf.mjs) usa este mismo CSS
+     con page.pdf({ printBackground:true }) para un PDF con texto vectorial.
    ========================================================================== */
 
 @page { size: 1280px 720px; margin: 0; }
@@ -12,6 +14,8 @@
     background: #fff;
     overflow: visible;
     height: auto;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
   .sd-ui, .sd-progress, .sd-notes-panel { display: none !important; }
   sd-deck { display: block; }
@@ -41,6 +45,10 @@
   .sd-slide .fragment { opacity: 1 !important; }
   .sd-slide .sd-content { transform: none !important; width: auto; height: auto; }
   .sd-slide sd-diagram, .sd-slide .sd-arrow svg { transform: none !important; }
+  .sd-slide {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
 
   /* Notas del orador impresas al pie de su diapositiva. */
   .sd-slide[data-notes]:not([data-notes=""])::after {
