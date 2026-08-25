@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "test": "node test/verify.mjs",
+    "serve": "node test/serve.mjs",
     "pdf": "node test/export-pdf.mjs",
     "pdf:raster": "node test/export-pdf.mjs --raster",
     "gen-assets": "node test/gen-assets.mjs"

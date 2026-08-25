@@ -11,8 +11,10 @@
  */
 import { chromium } from 'playwright';
 import http from 'node:http';
+import net from 'node:net';
 import fs from 'node:fs';
 import path from 'node:path';
+import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -64,6 +66,115 @@ function serve() {
     });
     server.listen(PORT, '127.0.0.1', () => resolve(server));
   });
+}
+
+/* Puerto libre para no chocar con el servidor de la suite (PORT) */
+function freePort() {
+  return new Promise((resolve, reject) => {
+    const srv = net.createServer();
+    srv.once('error', reject);
+    srv.listen(0, '127.0.0.1', () => {
+      const port = srv.address().port;
+      srv.close(() => resolve(port));
+    });
+  });
+}
+
+function waitForHttp(url, timeoutMs = 10000) {
+  return new Promise((resolve, reject) => {
+    const t0 = Date.now();
+    function attempt() {
+      const req = http.get(url, (res) => { res.resume(); res.statusCode === 200 ? resolve() : retry(); });
+      req.on('error', retry);
+    }
+    function retry() {
+      if (Date.now() - t0 > timeoutMs) return reject(new Error('el servidor dev no responde: ' + url));
+      setTimeout(attempt, 150);
+    }
+    attempt();
+  });
+}
+
+/* ---- verificación del servidor dev con autoreload (test/serve.mjs) ----
+   Arranca serve.mjs en un puerto libre, abre la presentación y comprueba:
+   conexión SSE, recarga suave al editar slides.md (sin recarga completa,
+   conservando la diapositiva actual y renderizando el markdown nuevo) y
+   recarga completa al cambiar CSS. Restaura los ficheros editados. */
+async function testAutoreload(browser) {
+  const slidesMd = path.join(PRESENTATION, 'slides.md');
+  const customCss = path.join(PRESENTATION, 'custom.css');
+  const originalMd = fs.readFileSync(slidesMd, 'utf8');
+  const originalCss = fs.readFileSync(customCss, 'utf8');
+
+  const port = await freePort();
+  const base = `http://127.0.0.1:${port}`;
+  const proc = spawn(process.execPath, [path.join(FRAMEWORK, 'test', 'serve.mjs'), '--port', String(port)], { stdio: ['ignore', 'pipe', 'pipe'] });
+  const out = [];
+  proc.stdout.on('data', (d) => out.push(d));
+  proc.stderr.on('data', (d) => out.push(d));
+
+  const page = await browser.newPage({ viewport: { width: 1440, height: 810 } });
+  const errs = [];
+  page.on('console', (m) => { if (m.type() === 'error') errs.push(m.text()); });
+  page.on('pageerror', (e) => errs.push('pageerror: ' + e.message));
+  const failsBefore = fail;
+
+  try {
+    await waitForHttp(`${base}/index.html`);
+    await page.goto(`${base}/index.html`, { waitUntil: 'load' });
+    await page.waitForFunction(() => document.querySelectorAll('.sd-slide').length > 0, null, { timeout: 15000 });
+
+    await page.waitForFunction(() => window.__sdLive === true, null, { timeout: 8000 });
+    check(true, 'cliente autoreload conectado (SSE)');
+
+    const total0 = await page.evaluate(() => document.querySelectorAll('.sd-slide').length);
+
+    // ir a la diapositiva 2 y marcar la ventana para distinguir
+    // recarga suave (marca viva) de recarga completa (marca perdida)
+    await page.evaluate(() => {
+      document.querySelector('sd-deck')._show(1, 0, { noAnim: true });
+      window.__noFullReload = true;
+    });
+
+    // --- editar slides.md: nueva diapositiva marcadora al final ---
+    fs.writeFileSync(slidesMd, originalMd.replace(/\s*$/, '\n\n---\n\n<!-- slide: layout=section -->\n# AUTORELOAD_OK\n'));
+    // esperar al re-render completo: nº de slides Y contador ya actualizados
+    // (evita leer el contador a mitad de _load, antes de _show)
+    await page.waitForFunction((n) => {
+      const c = document.querySelector('.sd-counter');
+      return document.querySelectorAll('.sd-slide').length === n + 1 && !!c && c.textContent.trim() === `2 / ${n + 1}`;
+    }, total0, { timeout: 15000 });
+    check(await page.evaluate(() => window.__noFullReload === true), 'md cambiado → recarga suave (sin recarga completa)');
+    check(await page.evaluate(() => !document.querySelector('.sd-error')), 'recarga suave sin errores de render');
+    const counter = await page.evaluate(() => document.querySelector('.sd-counter').textContent.trim());
+    check(counter === `2 / ${total0 + 1}`, 'diapositiva actual conservada', counter);
+    const markerRendered = await page.evaluate(() => {
+      const ss = document.querySelectorAll('.sd-slide');
+      const last = ss[ss.length - 1];
+      return !!last && last.textContent.includes('AUTORELOAD_OK');
+    });
+    check(markerRendered, 'markdown nuevo renderizado en la última slide');
+
+    // --- restaurar slides.md ---
+    fs.writeFileSync(slidesMd, originalMd);
+    await page.waitForFunction((n) => document.querySelectorAll('.sd-slide').length === n, total0, { timeout: 15000 });
+    check(true, 'restauración de slides.md aplicada');
+
+    // --- cambiar custom.css → recarga completa (la marca desaparece) ---
+    fs.writeFileSync(customCss, originalCss + '\n/* autoreload-check */\n');
+    await page.waitForFunction(() => window.__noFullReload === undefined, null, { timeout: 15000 });
+    check(true, 'css cambiado → recarga completa');
+
+    check(errs.length === 0, 'sin errores de consola durante autoreload', errs[0] || '');
+  } catch (e) {
+    ko('autoreload', e.message);
+  } finally {
+    fs.writeFileSync(slidesMd, originalMd);
+    fs.writeFileSync(customCss, originalCss);
+    await page.close();
+    proc.kill();
+    if (fail > failsBefore) console.log('[serve.mjs]\n' + out.join(''));
+  }
 }
 
 function findDecks() {
@@ -456,6 +567,9 @@ async function run() {
     }
     check(consoleErrors.length === 0, `— sin errores de consola (${total} diapos)`, consoleErrors.length ? consoleErrors[0] : '');
   }
+
+  // ---- verificación autoreload (servidor dev: npm run serve) ----
+  await testAutoreload(browser);
 
   // ---- verificación PDF vector (pixel-perfect con texto) ----
   console.log('\n=== PDF export (vector) ===');

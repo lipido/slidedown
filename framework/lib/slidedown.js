@@ -770,6 +770,10 @@
 
     /* ------------------------- carga ------------------------- */
     async _load(src) {
+      /* Reiniciar navegación: en recarga suave (reload()) el índice puede ser
+         igual al del hash y _show filtraría prev===next sin aplicar nada. */
+      this._index = -1;
+      this._fragIndex = -1;
       var sources = src.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
       var parts = [];
       var ok = false;
@@ -836,6 +840,26 @@
       var initial = parseInt(location.hash.slice(1), 10);
       if (isNaN(initial)) initial = 0;
       this._show(clamp(initial, 0, this._slides.length - 1), 0, { noAnim: true });
+    }
+
+    /* Recarga suave (autoreload): vuelve a cargar las fuentes markdown y
+       re-renderiza conservando la diapositiva actual (#hash). Con
+       cache-buster para saltarse la caché del navegador. La usa el cliente
+       de autoreload del servidor dev (test/serve.mjs). */
+    async reload() {
+      var src = this.getAttribute('src');
+      if (!src) { location.reload(); return; }
+      var bust = String(Date.now());
+      var busted = src.split(',').map(function (s) {
+        s = s.trim();
+        if (!s) return s;
+        return s + (s.indexOf('?') === -1 ? '?' : '&') + '__sd=' + bust;
+      }).join(',');
+      try {
+        await this._load(busted);
+      } catch (err) {
+        this._frame.innerHTML = '<div class="sd-error">' + esc(err.message || err) + '</div>';
+      }
     }
 
     _buildSlide(raw) {

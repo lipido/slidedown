@@ -7,15 +7,18 @@ Clona este repo para cada presentación nueva: edita `slides.md` y `theme/themes
 ## Uso rápido
 
 ```bash
-# sirve la presentación (fetch necesita HTTP)
-python3 -m http.server
+cd framework
+conda activate slidedown
+npm run serve        # sirve la web con autoreload
 
-# abre http://localhost:8000
+# abre http://localhost:8000  (otro puerto: npm run serve -- --port 9000)
 ```
 
-> **Recarga:** para ver cambios en `slides.md` y el CSS basta con recargar (F5).
-> Si editas `lib/slidedown.js`, usa recarga forzada (`shift` + recargar) para
-> descartar la caché del navegador.
+**Autoreload:** al guardar `slides.md`, `custom.css`, el tema o `index.html` el
+navegador se actualiza solo. El markdown se re-renderiza **en caliente
+conservando la diapositiva actual** (los fragmentos revelados se reinician);
+los cambios de CSS/HTML/JS recargan la página completa. El servidor de desarrollo
+desactiva la caché del navegador: no hacen falta F5 ni recargas forzadas.
 
 O escribe el markdown inline en `index.html` y ábrelo con doble clic (sin servidor):
 
@@ -51,7 +54,7 @@ slidedown/                 # raíz = UNA presentación (lo que editas)
     │   ├── print.css      # Export PDF
     │   └── themes/        # Temas: light, dark, blueprint (plantilla)
     ├── samples/           # Decks de ejemplo (documentación funcional)
-    ├── test/              # Suite de verificación + generador de assets
+    ├── test/              # Suite de verificación, servidor dev (serve.mjs) y generador de assets
     ├── package.json       # npm test / gen-assets
     └── environment.yml    # Entorno conda reproducible
 ```
@@ -327,8 +330,9 @@ conda env create -f environment.yml
 conda activate slidedown
 npm install
 npx playwright install chromium
-npm test          # ejecuta la suite (test/verify.mjs) — incluye check del PDF
-npm run pdf       # exporta la presentación raíz a slides.pdf (vector)
+npm run serve      # servidor dev con autoreload (sirve la presentación raíz)
+npm test           # ejecuta la suite (test/verify.mjs) — incluye check del PDF
+npm run pdf        # exporta la presentación raíz a slides.pdf (vector)
 npm run gen-assets  # regenera los placeholders (assets versionados en git)
 ```
 
