@@ -30,15 +30,17 @@ const DEFAULT_PORT = 8924;
 const args = process.argv.slice(2);
 if (args.includes('--help') || args.includes('-h')) {
   console.log(`
-Uso: node test/export-pdf.mjs [deck] [opciones]
+Uso: node test/export-pdf.mjs [deck|archivo.md] [opciones]
 
   deck              Carpeta del deck (ej: samples/02-diagrams). Por defecto: raíz.
+  archivo.md        Markdown de la raíz del proyecto (ej: tema1.md → tema1.pdf).
   --out <path>      Ruta de salida del PDF.
   --raster          Modo raster (screenshots PNG). Por defecto: vector (page.pdf).
   --port <n>        Puerto del servidor estático (por defecto ${DEFAULT_PORT}).
 
 Ejemplos:
   npm run pdf
+  npm run pdf -- tema1.md
   npm run pdf -- samples/02-diagrams
   node test/export-pdf.mjs --out /tmp/mi.pdf --raster
 `);
@@ -66,6 +68,21 @@ function resolveDeck(arg) {
       urlPath: '/index.html',
       dir: PRESENTATION,
       outDefault: path.join(PRESENTATION, 'slides.pdf'),
+    };
+  }
+  // archivo .md de la raíz del proyecto → index.html?md=<archivo>
+  if (arg.toLowerCase().endsWith('.md')) {
+    const mdAbs = path.resolve(PRESENTATION, arg);
+    const rel = path.relative(PRESENTATION, mdAbs);
+    if (!fs.existsSync(mdAbs) || rel.startsWith('..')) {
+      throw new Error(`Markdown no encontrado en la raíz: ${arg}. Usa un .md de la raíz del proyecto, "samples/<nombre>" o deja vacío para la raíz.`);
+    }
+    const relSlash = rel.split(path.sep).join('/');
+    return {
+      name: relSlash,
+      urlPath: `/index.html?md=${encodeURIComponent(relSlash)}`,
+      dir: path.dirname(mdAbs),
+      outDefault: path.join(path.dirname(mdAbs), path.basename(mdAbs, path.extname(mdAbs)) + '.pdf'),
     };
   }
   // normalizar: samples/02-diagrams  -> framework/samples/02-diagrams

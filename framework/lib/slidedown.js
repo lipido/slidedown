@@ -640,7 +640,7 @@
       try { saved = localStorage.getItem('sd-theme'); } catch (e) {}
       if (saved) this.setTheme(saved);
 
-      var src = this.getAttribute('src') || 'slides.md';
+      var src = this._resolveSrc();
       var self = this;
       this._load(src).catch(function (err) {
         self._frame.innerHTML = '<div class="sd-error">' + esc(err.message || err) + '</div>';
@@ -661,6 +661,17 @@
       var cur = document.documentElement.dataset.theme || 'light';
       var i = (THEMES.indexOf(cur) + 1) % THEMES.length;
       this.setTheme(THEMES[i]);
+    }
+
+    /* Fuente efectiva del markdown:
+       ?md=<archivo> en la URL gana al atributo src (permite varias
+       presentaciones .md en la raíz: index.html?md=tema1.md). */
+    _resolveSrc() {
+      try {
+        var q = new URLSearchParams(location.search).get('md');
+        if (q && q.trim()) return q.trim();
+      } catch (e) { /* URLSearchParams no disponible: usa el atributo */ }
+      return this.getAttribute('src') || 'slides.md';
     }
 
     /* ------------------------- chrome ------------------------- */
@@ -847,7 +858,7 @@
        cache-buster para saltarse la caché del navegador. La usa el cliente
        de autoreload del servidor dev (test/serve.mjs). */
     async reload() {
-      var src = this.getAttribute('src');
+      var src = this._resolveSrc();
       if (!src) { location.reload(); return; }
       var bust = String(Date.now());
       var busted = src.split(',').map(function (s) {

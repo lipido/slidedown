@@ -177,6 +177,62 @@ async function testAutoreload(browser) {
   }
 }
 
+/* ---- verificación de varias presentaciones .md en la raíz ----
+   El framework permite cargar cualquier .md de la raíz con ?md=<archivo>
+   (index.html?md=tema1.md). Se comprueba en navegador (override del src del
+   deck) y en el CLI de export (node test/export-pdf.mjs tema1.md → tema1.pdf).
+   Se crea un .md temporal en la raíz y se elimina al terminar. */
+async function testMdDecks(browser) {
+  const testMd = path.join(PRESENTATION, '_sd_verify_test.md');
+  const mdContent = '# Prueba ?md=\n\nPrimera diapositiva\n\n---\n\n<!-- slide: layout=section -->\n## Segunda ?md=\n';
+  const exportOut = path.join(__dirname, 'pdf', 'verify-md.pdf');
+  fs.writeFileSync(testMd, mdContent);
+  const failsBefore = fail;
+  let page = null;
+  let out = [];
+  try {
+    // --- navegador: index.html?md=<archivo> ---
+    page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+    const errs = [];
+    page.on('console', (m) => { if (m.type() === 'error') errs.push(m.text()); });
+    page.on('pageerror', (e) => errs.push('pageerror: ' + e.message));
+    await page.goto(`http://127.0.0.1:${PORT}/index.html?md=${encodeURIComponent('_sd_verify_test.md')}`, { waitUntil: 'load' });
+    await page.waitForFunction(() => document.querySelectorAll('.sd-slide').length > 0, null, { timeout: 15000 });
+    const total = await page.evaluate(() => document.querySelectorAll('.sd-slide').length);
+    check(total === 2, '?md= carga el .md elegido', `${total} slides`);
+    const txt = await page.evaluate(() => document.body.textContent);
+    check(txt.includes('Prueba ?md=') && txt.includes('Segunda ?md='), '?md= renderiza el contenido del .md');
+    check(errs.length === 0, '?md= sin errores de consola', errs[0] || '');
+    await page.close();
+    page = null;
+
+    // --- CLI: export-pdf.mjs con un .md de la raíz ---
+    const port = await freePort();
+    const proc = spawn(process.execPath, [path.join(FRAMEWORK, 'test', 'export-pdf.mjs'), '_sd_verify_test.md', '--out', exportOut, '--port', String(port)], { stdio: ['ignore', 'pipe', 'pipe'] });
+    proc.stdout.on('data', (d) => out.push(d));
+    proc.stderr.on('data', (d) => out.push(d));
+    const code = await new Promise((resolve) => proc.on('close', resolve));
+    check(code === 0, 'export-pdf <archivo.md> termina sin error', code === 0 ? '' : out.join(''));
+    if (code === 0 && fs.existsSync(exportOut)) {
+      const bytes = fs.readFileSync(exportOut);
+      check(bytes.subarray(0, 4).toString() === '%PDF', 'export-pdf <archivo.md> cabecera %PDF');
+      try {
+        const { PDFDocument } = await import('pdf-lib');
+        const doc = await PDFDocument.load(bytes);
+        check(doc.getPageCount() === 2, 'export-pdf <archivo.md> nº páginas', `${doc.getPageCount()} vs 2`);
+      } catch (e) {
+        ko('export-pdf <archivo.md> inspección con pdf-lib', e.message);
+      }
+    }
+  } catch (e) {
+    ko('?md= / export-pdf <archivo.md>', e.message);
+  } finally {
+    try { fs.unlinkSync(testMd); } catch (e) {}
+    try { if (page) await page.close(); } catch (e) {}
+    if (fail > failsBefore) console.log('[?md=]\n' + out.join(''));
+  }
+}
+
 function findDecks() {
   const decks = [];
   // presentación raíz (slides.md + index.html del proyecto)
@@ -570,6 +626,10 @@ async function run() {
 
   // ---- verificación autoreload (servidor dev: npm run serve) ----
   await testAutoreload(browser);
+
+  // ---- verificación de varias presentaciones .md en la raíz (?md=) ----
+  console.log('\n=== Varias presentaciones .md en la raíz (?md=) ===');
+  await testMdDecks(browser);
 
   // ---- verificación PDF vector (pixel-perfect con texto) ----
   console.log('\n=== PDF export (vector) ===');

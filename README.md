@@ -14,6 +14,16 @@ npm run serve        # sirve la web con autoreload
 # abre http://localhost:8000  (otro puerto: npm run serve -- --port 9000)
 ```
 
+**Varias presentaciones en un repo:** la raíz puede contener varios `.md` (no
+solo `slides.md`). Se eligen con `?md=<archivo>` en la URL:
+
+```
+http://localhost:8000/index.html?md=tema1.md   # previsualizar tema1.md
+npm run pdf -- tema1.md                         # exportar → tema1.pdf
+```
+
+Todas comparten `custom.css` e `img/` de la raíz (igual que `slides.md`).
+
 **Autoreload:** al guardar `slides.md`, `custom.css`, el tema o `index.html` el
 navegador se actualiza solo. El markdown se re-renderiza **en caliente
 conservando la diapositiva actual** (los fragmentos revelados se reinician);
@@ -35,11 +45,11 @@ O escribe el markdown inline en `index.html` y ábrelo con doble clic (sin servi
 ## Estructura
 
 ```
-slidedown/                 # raíz = UNA presentación (lo que editas)
+slidedown/                 # raíz = UNA o VARIAS presentaciones (lo que editas)
 ├── index.html             # Punto de entrada
-├── slides.md              # Contenido de la presentación
-├── custom.css             # Overrides de aspecto de ESTA presentación
-├── img/                   # Imágenes de esta presentación
+├── slides.md              # Presentación por defecto (src del deck)
+├── custom.css             # Overrides de aspecto compartidos por las presentaciones
+├── img/                   # Imágenes (compartidas por las presentaciones de la raíz)
 └── framework/             # Reutilizable: NO se toca al presentar
     ├── lib/
     │   ├── marked.min.js  # Parser markdown (vendored)
@@ -60,7 +70,9 @@ slidedown/                 # raíz = UNA presentación (lo que editas)
 ```
 
 Al clonar para una presentación nueva, el `framework/` viene incluido: solo
-editas la raíz (`slides.md`, `custom.css`, `img/`).
+editas la raíz (`slides.md`, `custom.css`, `img/`). Para varias presentaciones
+en el mismo repo, añade más `.md` en la raíz (`tema1.md`, `tema2.md`…) y
+elígelas con `?md=` o en el exportador de PDF (ver "Exportar a PDF").
 
 ## Sintaxis
 
@@ -306,6 +318,7 @@ conda activate slidedown
 npm install                 # instala playwright + pdf-lib
 npx playwright install chromium
 npm run pdf                 # → slides.pdf en la raíz (presentación)
+npm run pdf -- tema1.md     # → tema1.pdf (cualquier .md de la raíz)
 npm run pdf -- samples/02-diagrams --out /tmp/diagramas.pdf
 npm run pdf:raster          # modo raster (screenshots PNG, píxel literal)
 ```

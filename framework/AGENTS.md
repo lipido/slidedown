@@ -16,7 +16,7 @@ Guía para agentes que trabajan en slidedown. Léela antes de tocar código.
 - `npm run pdf` (vector, texto seleccionable) y `npm run pdf:raster` (screenshots, píxel literal) exportan la presentación raíz a `slides.pdf` (1280×720 pt, fragmentos revelados). Usan el mismo `print.css` con `printBackground:true`.
 - `npm run serve` sirve la presentación con **autoreload** (`test/serve.mjs`: estático sin caché + push SSE; `.md` → recarga suave vía `SdDeck.reload()` conservando slide, resto → recarga completa). El cliente se inyecta al servir los HTML: los fuentes quedan limpios y sin servidor externo todo sigue funcionando.
 - `npm run gen-assets` regenera placeholders. Los assets se **versionan en git** (el clonado funciona sin internet).
-- La raíz del proyecto es UNA presentación (`slides.md`, `custom.css`, `img/`); el framework vive en `framework/` y no se toca al presentar.
+- La raíz del proyecto puede contener **varias presentaciones**: cada una es un `.md` (por defecto `slides.md`), todas comparten `custom.css` e `img/`. Se eligen con `?md=<archivo>` en la URL (`index.html?md=tema1.md`) o en el export: `npm run pdf -- tema1.md` → `tema1.pdf`. En `slidedown.js` la fuente efectiva la decide `_resolveSrc()` (query `md` > atributo `src` > `slides.md`); `reload()` también la respeta. El framework vive en `framework/` y no se toca al presentar.
 
 ## Arquitectura de render
 
