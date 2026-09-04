@@ -60,6 +60,8 @@ transition: fade
 - Punto A con texto largo
 - Punto B con texto largo
 - Punto C con texto largo
+- Punto D — añade más altura para que la columna izquierda sea alta
+- Punto E — y siga sumando líneas de texto
 
 ```js
 function hello(name) {
@@ -83,5 +85,8 @@ function hello(name) {
 - Punto D — texto adicional para que la columna derecha también sea alta y pruebe el grid
 - Punto E — Lorem ipsum dolor sit amet
 - Punto F — Último punto que debe verse
+- Punto G — más contenido para forzar el desborde de las columnas
+- Punto H — la columna debe escalar con el auto-fit, nunca recortar
+- Punto I — si este texto se ve cortado dentro de la columna, hay truncado
 
 :::

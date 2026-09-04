@@ -459,7 +459,7 @@ async function inspectSlide(page, idx, total) {
     // OJO: el marco va escalado (--sd-scale), así que getBoundingClientRect()
     // devuelve px de pantalla y clientHeight/scrollHeight px de layout.
     // Convertimos todo a px de layout con ratio = sr.height / clientHeight.
-    results.trunc = { trunc: false, lastOut: false, imgOut: false, scale: 1, needed: 0, available: 0 };
+    results.trunc = { trunc: false, lastOut: false, imgOut: false, colsClip: false, scale: 1, needed: 0, available: 0 };
     const content = s.querySelector('.sd-content');
     if (content) {
       const cs = getComputedStyle(s);
@@ -490,6 +490,13 @@ async function inspectSlide(page, idx, total) {
       s.querySelectorAll('img').forEach(img => {
         const r = img.getBoundingClientRect();
         if (r.bottom > sr.bottom + 2 || r.right > sr.right + 2) results.trunc.imgOut = true;
+      });
+      // Recorte dentro de columnas: si .sd-cols o .col encogen por flexbox y
+      // recortan su contenido (overflow:hidden), hay truncado aunque el
+      // scrollHeight de .sd-content no lo refleje. Con el fix, el auto-fit
+      // escala todo el contenido y cada columna cabe.
+      s.querySelectorAll('.sd-cols, .sd-cols .col').forEach((el) => {
+        if (el.scrollHeight > el.clientHeight + 4) results.trunc.colsClip = true;
       });
     }
 
@@ -542,7 +549,7 @@ async function inspectSlide(page, idx, total) {
     }
   }
   // Sagrada: todo cabe sin truncado (visual: nada sale de la diapositiva)
-  check(!r.trunc.lastOut && !r.trunc.imgOut, name + ' — sin truncado (todo cabe)', `scale ${r.trunc.scale} needed ${r.trunc.needed} avail ${r.trunc.available}${r.trunc.lastOut?' lastOut':''}${r.trunc.imgOut?' imgOut':''}`);
+  check(!r.trunc.lastOut && !r.trunc.imgOut && !r.trunc.colsClip, name + ' — sin truncado (todo cabe)', `scale ${r.trunc.scale} needed ${r.trunc.needed} avail ${r.trunc.available}${r.trunc.lastOut?' lastOut':''}${r.trunc.imgOut?' imgOut':''}${r.trunc.colsClip?' colsClip':''}`);
 }
 
 async function run() {

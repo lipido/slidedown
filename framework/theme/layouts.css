@@ -6,7 +6,7 @@
 /* ------------------------ columnas (.col) ------------------------ */
 /* Las columnas se agrupan en .sd-cols (data-count=N) por el JS, de modo
    que el grid no afecta a títulos/párrafos que estén fuera de ellas. */
-.sd-cols { display: grid; gap: var(--sd-gap); width: 100%; min-height: 0; overflow: hidden; }
+.sd-cols { display: grid; gap: var(--sd-gap); width: 100%; min-height: 0; flex-shrink: 0; overflow: hidden; }
 .sd-cols[data-count="2"] { grid-template-columns: 1fr 1fr; }
 .sd-cols[data-count="3"] { grid-template-columns: 1fr 1fr 1fr; }
 .sd-cols[data-count="4"] { grid-template-columns: 1fr 1fr 1fr 1fr; }
