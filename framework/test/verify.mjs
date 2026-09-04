@@ -459,7 +459,7 @@ async function inspectSlide(page, idx, total) {
     // OJO: el marco va escalado (--sd-scale), así que getBoundingClientRect()
     // devuelve px de pantalla y clientHeight/scrollHeight px de layout.
     // Convertimos todo a px de layout con ratio = sr.height / clientHeight.
-    results.trunc = { trunc: false, lastOut: false, imgOut: false, colsClip: false, scale: 1, needed: 0, available: 0 };
+    results.trunc = { trunc: false, lastOut: false, imgOut: false, colsClip: false, scale: 1, needed: 0, available: 0, fill: 0 };
     const content = s.querySelector('.sd-content');
     if (content) {
       const cs = getComputedStyle(s);
@@ -479,6 +479,15 @@ async function inspectSlide(page, idx, total) {
       results.trunc.needed = Math.round(neededVisualLayout);
       results.trunc.available = Math.round(availLayout);
       results.trunc.scale = Number(scale.toFixed(2));
+      // Relleno vertical: extensión real de los hijos respecto al área útil
+      // (px de layout). El auto-fit debe llenar el área; en slides escaladas
+      // (scale < 1) se exige un mínimo para detectar huecos abajo (ver fitSlide).
+      let fill = 0;
+      for (const kid of content.children) {
+        const b = (kid.getBoundingClientRect().bottom - sr.top) / ratio - parseFloat(cs.paddingTop);
+        if (b > fill) fill = b;
+      }
+      results.trunc.fill = Math.round(fill / availLayout * 100) / 100;
       // Trunc si aun tras el zoom el contenido lógico no cabe en el área útil
       results.trunc.trunc = neededVisualLayout > availLayout + 4;
       const last = content.lastElementChild;
@@ -550,6 +559,8 @@ async function inspectSlide(page, idx, total) {
   }
   // Sagrada: todo cabe sin truncado (visual: nada sale de la diapositiva)
   check(!r.trunc.lastOut && !r.trunc.imgOut && !r.trunc.colsClip, name + ' — sin truncado (todo cabe)', `scale ${r.trunc.scale} needed ${r.trunc.needed} avail ${r.trunc.available}${r.trunc.lastOut?' lastOut':''}${r.trunc.imgOut?' imgOut':''}${r.trunc.colsClip?' colsClip':''}`);
+  // Auto-fit: las slides escaladas deben llenar el área útil (no dejar hueco abajo)
+  if (r.trunc.scale < 1) check(r.trunc.fill >= 0.92, name + ' — auto-fit rellena el área', `fill ${Math.round(r.trunc.fill * 100)}% scale ${r.trunc.scale}`);
 }
 
 async function run() {

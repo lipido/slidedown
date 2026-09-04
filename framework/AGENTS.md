@@ -52,3 +52,4 @@ Guía para agentes que trabajan en slidedown. Léela antes de tocar código.
 - Flecha colapsada por timing → redibujar al terminar mermaid.
 - Contenido truncado abajo → auto-fit `zoom` en `.sd-content` (el `transform: scale` NO reduce el layout y `overflow:hidden` recorta).
 - Columnas recortando contenido → `.sd-cols` con `flex-shrink: 0` (si no, flexbox encoge el grid y recorta sus columnas con `overflow:hidden` antes de que el auto-fit pueda escalar).
+- Hueco abajo tras escalar → `zoom` reflowea el texto más ancho y el contenido queda más corto que el área útil; `fitSlide` re-mide la altura visual de los hijos y sube el zoom hacia 1 hasta llenar.

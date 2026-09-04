@@ -537,6 +537,18 @@
   /* --------------------------- auto-fit sin scroll --------------------------- */
   // Evita scroll: si el contenido desborda la altura útil (720 - padding), lo escala
   // Usa `zoom` (afecta layout, evita recorte por overflow:hidden) + fallback transform
+  function applyFit(content, scale) {
+    content.style.setProperty('--sd-content-scale', String(scale));
+    // zoom afecta layout (Chrome/Playwright), evita truncado por transform
+    if ('zoom' in content.style) {
+      content.style.zoom = String(scale);
+    } else {
+      content.style.transform = 'scale(' + scale + ')';
+      content.style.transformOrigin = 'top left';
+      content.style.width = (100 / scale) + '%';
+      content.style.height = (100 / scale) + '%';
+    }
+  }
   function fitSlide(slide) {
     if (!slide || slide.closest('.sd-overview')) return;
     var content = slide.querySelector('.sd-content');
@@ -556,16 +568,43 @@
     var needed = content.scrollHeight;
     if (needed > available + 2) {
       var scale = Math.max(0.45, available / needed);
-      content.style.setProperty('--sd-content-scale', String(scale));
-      // zoom afecta layout (Chrome/Playwright), evita truncado por transform
-      if ('zoom' in content.style) {
-        content.style.zoom = String(scale);
-      } else {
-        content.style.transform = 'scale(' + scale + ')';
-        content.style.transformOrigin = 'top left';
-        content.style.width = (100 / scale) + '%';
-        content.style.height = (100 / scale) + '%';
+      applyFit(content, scale);
+      // El zoom reflowea el texto (coordenada más ancha), así que el resultado
+      // suele quedar más corto que el área útil y sobra hueco abajo. Re-medimos
+      // la altura visual real (max bottom de los hijos) y ajustamos el zoom
+      // hacia 1 hasta llenar el área, con iteraciones acotadas y sin desbordar.
+      var slideRect = slide.getBoundingClientRect();
+      var ratio = slide.clientHeight ? (slideRect.height / slide.clientHeight) : 1;
+      var contentTop = slideRect.top + padTop * ratio;
+      var availScreen = available * ratio;
+      // El reflow del zoom es no lineal (imágenes con max-height, texto que se
+      // re-layouta a saltos de línea), así que el ajuste completo oscila y puede
+      // desbordar. Guardamos el último scale que cabe (best) y solo subimos con
+      // media corrección; al terminar garantizamos un estado seguro.
+      var best = scale;
+      applyFit(content, scale);
+      for (var i = 0; i < 12; i++) {
+        var visual = 0;
+        for (var j = 0; j < content.children.length; j++) {
+          var b = content.children[j].getBoundingClientRect().bottom - contentTop;
+          if (b > visual) visual = b;
+        }
+        if (visual > availScreen + 2) {
+          // desborda: retroceder hacia el último scale que cabía
+          var back = best + (scale - best) * 0.5;
+          if (Math.abs(back - scale) < 0.002) { scale = best; break; }
+          scale = back;
+        } else {
+          best = scale;
+          if (visual >= availScreen - 3) break; // ya llena el área
+          var target = Math.min(1, scale * (availScreen / visual));
+          var next = scale + (target - scale) * 0.5;
+          if (next - scale < 0.003) break;
+          scale = next;
+        }
+        applyFit(content, scale);
       }
+      applyFit(content, best);
     }
   }
   function fitAllSlides(root) {

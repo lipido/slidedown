@@ -90,3 +90,35 @@ function hello(name) {
 - Punto I — si este texto se ve cortado dentro de la columna, hay truncado
 
 :::
+
+---
+
+<!-- slide: layout=default -->
+# Prueba 4 — Contenido denso (zoom profundo)
+
+- Bullet 1 — Lorem ipsum dolor sit amet, consectetur adipiscing elit
+- Bullet 2 — Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua
+- Bullet 3 — Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris
+- Bullet 4 — Duis aute irure dolor in reprehenderit in voluptate velit esse
+- Bullet 5 — Excepteur sint occaecat cupidatat non proident
+- Bullet 6 — Sunt in culpa qui officia deserunt mollit anim id est laborum
+- Bullet 7 — Más texto para forzar que el auto-fit escale muy por debajo de 1
+- Bullet 8 — y aun así debe llenar el área sin dejar hueco abajo
+- Bullet 9 — Este bullet debe verse completo y el slide rellenado al 100%
+- Bullet 10 — Más líneas para que el contenido natural supere con claridad el área útil
+- Bullet 11 — El zoom debe quedar bien por debajo de 0.7 para probar el relleno
+- Bullet 12 — Último bullet de la lista principal — DEBE verse completo
+
+::: col
+![Imagen grande](img/foto.png){.img-w-80 .img-center .img-shadow}
+:::
+
+::: col
+## Columna derecha
+
+- Punto A — texto adicional en columna
+- Punto B — texto adicional en columna
+- Punto C — texto adicional en columna
+- Punto D — texto adicional en columna
+
+:::
