@@ -8,8 +8,8 @@ transition: fade
    SAMPLE 04 — NOTAS DEL ORADOR
    Escribe notas por diapositiva con:
        <!-- notes: texto -->
-   Se consultan con N (panel) y se imprimen al pie de la página
-   al exportar a PDF.
+   Se consultan con N (panel). El exportador de PDF las omite por
+   defecto (--include-notes las imprime al pie de la página).
    ============================================================ -->
 
 <!-- slide: layout=title -->
@@ -27,7 +27,8 @@ y ver el resultado al instante. Menciona que el panel se cierra con N. -->
 La nota es un comentario `<!-- notes: ... -->` en la diapositiva.
 
 - No se muestra en pantalla.
-- Sí aparece en el panel (tecla N) y en el PDF.
+- Sí aparece en el panel (tecla N).
+- En el PDF solo con `--include-notes`.
 
 <!-- notes: Recuerda: una sola nota por diapositiva.
 Puede ocupar varias líneas. -->
@@ -42,14 +43,15 @@ Puede ocupar varias líneas. -->
 3. Marca "lo que NO debes olvidar" en negrita.
 
 <!-- notes: En esta diapositiva la transición es zoom.
-Los tres consejos aparecen también en el PDF bajo la diapositiva. -->
+Los tres consejos aparecen también en el PDF bajo la diapositiva
+si se exporta con --include-notes. -->
 
 ---
 
 # Recapitulación
 
 - `N` alterna el panel de notas.
-- `P` exporta a PDF (las notas quedan al pie).
+- `P` exporta a PDF (sin notas; con `--include-notes` quedan al pie).
 - `O` muestra el resumen con miniaturas.
 
 <!-- notes: Cerramos con el flujo completo: editar -> N -> P. -->

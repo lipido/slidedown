@@ -7,10 +7,12 @@
  *   node test/export-pdf.mjs --help
  *
  * Opciones:
- *   --out <path>   Ruta de salida (por defecto: <deck>/slides.pdf)
- *   --raster       Modo raster: screenshots PNG + pdf-lib (píxel literal,
- *                  sin texto vectorial). Por defecto es vector (page.pdf
- *                  con texto seleccionable, réplica fiel de pantalla).
+ *   --out <path>        Ruta de salida (por defecto: <deck>/slides.pdf)
+ *   --raster            Modo raster: screenshots PNG + pdf-lib (píxel literal,
+ *                       sin texto vectorial). Por defecto es vector (page.pdf
+ *                       con texto seleccionable, réplica fiel de pantalla).
+ *   --include-notes     Imprime las notas del orador al pie de su diapositiva.
+ *                       Por defecto se omiten (PDF limpio para el alumnado).
  *
  * Requisitos: conda activate slidedown && npm install (playwright + pdf-lib)
  * Genera un PDF de 1280×720 pt por diapositiva (fragmentos todos revelados).
@@ -36,11 +38,13 @@ Uso: node test/export-pdf.mjs [deck|archivo.md] [opciones]
   archivo.md        Markdown de la raíz del proyecto (ej: tema1.md → tema1.pdf).
   --out <path>      Ruta de salida del PDF.
   --raster          Modo raster (screenshots PNG). Por defecto: vector (page.pdf).
+  --include-notes   Imprime las notas del orador al pie. Por defecto se omiten.
   --port <n>        Puerto del servidor estático (por defecto ${DEFAULT_PORT}).
 
 Ejemplos:
   npm run pdf
   npm run pdf -- tema1.md
+  npm run pdf -- tema1.md --include-notes
   npm run pdf -- samples/02-diagrams
   node test/export-pdf.mjs --out /tmp/mi.pdf --raster
 `);
@@ -50,10 +54,12 @@ Ejemplos:
 let deckArg = null;
 let outArg = null;
 let raster = false;
+let includeNotes = false;
 let port = DEFAULT_PORT;
 for (let i = 0; i < args.length; i++) {
   const a = args[i];
   if (a === '--raster') raster = true;
+  else if (a === '--include-notes') includeNotes = true;
   else if (a === '--out' && args[i + 1]) { outArg = args[++i]; }
   else if (a === '--port' && args[i + 1]) { port = parseInt(args[++i], 10); }
   else if (!a.startsWith('--') && !deckArg) deckArg = a;
@@ -166,6 +172,14 @@ async function prepareSlide(page, idx) {
   await waitForSlideReady(page);
 }
 
+// Sin --include-notes las notas del orador (data-notes) se eliminan del DOM:
+// print.css solo las imprime al pie vía ::after cuando el atributo existe.
+async function stripNotes(page) {
+  await page.evaluate(() => {
+    document.querySelectorAll('.sd-slide').forEach((s) => s.removeAttribute('data-notes'));
+  });
+}
+
 async function exportVector(page, out) {
   const url = `http://127.0.0.1:${port}${deck.urlPath}`;
   console.log(`→ ${deck.name}  ${url}`);
@@ -189,6 +203,9 @@ async function exportVector(page, out) {
       }
     });
   });
+
+  // por defecto el PDF sale sin las notas del orador (--include-notes las añade)
+  if (!includeNotes) await stripNotes(page);
 
   // asegurar que todas las imágenes y mermaid de todo el deck están listas
   await page.waitForFunction(() => {
@@ -221,6 +238,8 @@ async function exportRaster(page, out) {
   await page.waitForFunction(() => document.querySelectorAll('.sd-slide').length > 0, null, { timeout: 15000 });
   const total = await page.evaluate(() => document.querySelectorAll('.sd-slide').length);
   console.log(`  ${total} diapositivas, capturando a 1280×720...`);
+
+  if (!includeNotes) await stripNotes(page);
 
   const pdfDoc = await PDFDocument.create();
   for (let i = 0; i < total; i++) {

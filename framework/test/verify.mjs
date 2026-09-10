@@ -184,7 +184,7 @@ async function testAutoreload(browser) {
    Se crea un .md temporal en la raíz y se elimina al terminar. */
 async function testMdDecks(browser) {
   const testMd = path.join(PRESENTATION, '_sd_verify_test.md');
-  const mdContent = '# Prueba ?md=\n\nPrimera diapositiva\n\n---\n\n<!-- slide: layout=section -->\n## Segunda ?md=\n';
+  const mdContent = '# Prueba ?md=\n\nPrimera diapositiva\n\n<!-- notes: NOTAS_SECRETAS_XYZ -->\n\n---\n\n<!-- slide: layout=section -->\n## Segunda ?md=\n';
   const exportOut = path.join(__dirname, 'pdf', 'verify-md.pdf');
   fs.writeFileSync(testMd, mdContent);
   const failsBefore = fail;
@@ -202,18 +202,77 @@ async function testMdDecks(browser) {
     check(total === 2, '?md= carga el .md elegido', `${total} slides`);
     const txt = await page.evaluate(() => document.body.textContent);
     check(txt.includes('Prueba ?md=') && txt.includes('Segunda ?md='), '?md= renderiza el contenido del .md');
+
+    // --- notas del orador: mecanismo del footer en impresión ---
+    // slidedown guarda la nota en data-notes; print.css la imprime al pie
+    // vía ::after { content: attr(data-notes) }. El exportador la omite por
+    // defecto eliminando el atributo; verificamos aquí el contrato completo.
+    const noteOnSlide = await page.evaluate(() => {
+      const s = document.querySelector('.sd-slide[data-idx="0"]');
+      return (s && s.dataset.notes) || '';
+    });
+    check(noteOnSlide.includes('NOTAS_SECRETAS_XYZ'), '?md= data-notes presente en la slide con nota');
+    await page.emulateMedia({ media: 'print' });
+    const footerWithNotes = await page.evaluate(() => {
+      const s = document.querySelector('.sd-slide[data-idx="0"]');
+      return getComputedStyle(s, '::after').content || '';
+    });
+    check(footerWithNotes.includes('NOTAS_SECRETAS_XYZ'), 'print: ::after muestra la nota al pie', footerWithNotes);
+    await page.evaluate(() => document.querySelectorAll('.sd-slide').forEach((x) => x.removeAttribute('data-notes')));
+    const footerStripped = await page.evaluate(() => {
+      const s = document.querySelector('.sd-slide[data-idx="0"]');
+      return getComputedStyle(s, '::after').content || '';
+    });
+    check(footerStripped === 'none' || footerStripped === 'normal', 'print: sin data-notes el pie desaparece', footerStripped);
+    await page.emulateMedia({ media: 'screen' });
+
     check(errs.length === 0, '?md= sin errores de consola', errs[0] || '');
     await page.close();
     page = null;
 
     // --- CLI: export-pdf.mjs con un .md de la raíz ---
     const port = await freePort();
-    const proc = spawn(process.execPath, [path.join(FRAMEWORK, 'test', 'export-pdf.mjs'), '_sd_verify_test.md', '--out', exportOut, '--port', String(port)], { stdio: ['ignore', 'pipe', 'pipe'] });
-    proc.stdout.on('data', (d) => out.push(d));
-    proc.stderr.on('data', (d) => out.push(d));
-    const code = await new Promise((resolve) => proc.on('close', resolve));
-    check(code === 0, 'export-pdf <archivo.md> termina sin error', code === 0 ? '' : out.join(''));
-    if (code === 0 && fs.existsSync(exportOut)) {
+    const exportPdf = path.join(FRAMEWORK, 'test', 'export-pdf.mjs');
+    const runExport = (extraArgs) => new Promise((resolve) => {
+      const o = [];
+      const proc = spawn(process.execPath, [exportPdf, '_sd_verify_test.md', '--out', exportOut, '--port', String(port), ...extraArgs], { stdio: ['ignore', 'pipe', 'pipe'] });
+      proc.stdout.on('data', (d) => { out.push(d); o.push(d); });
+      proc.stderr.on('data', (d) => { out.push(d); o.push(d); });
+      proc.on('close', (code) => resolve({ code, out: o.join('') }));
+    });
+    // extrae el texto de los content streams (descomprimiendo FlateDecode).
+    // El texto va codificado con fuentes subset (glyphs hex), así que no se
+    // puede buscar la nota literal; el pie de notas de print.css se detecta
+    // por su bloque: borde 13px (::after font-size:13px) + run de texto 13 Tf.
+    const pdfPageTexts = async () => {
+      const { PDFDocument } = await import('pdf-lib');
+      const zlib = await import('node:zlib');
+      const doc = await PDFDocument.load(fs.readFileSync(exportOut));
+      const pages = [];
+      for (const pg of doc.getPages()) {
+        const contents = pg.node.Contents();
+        const streams = [];
+        if (contents && typeof contents.size === 'function') {
+          for (let i = 0; i < contents.size(); i++) streams.push(contents.get(i));
+        } else if (contents) streams.push(contents);
+        let text = '';
+        for (const s of streams) {
+          if (s && typeof s.getContents === 'function') {
+            let raw = s.getContents();
+            try { raw = zlib.inflateSync(raw); } catch (e) {}
+            text += Buffer.from(raw).toString('latin1');
+          }
+        }
+        pages.push(text);
+      }
+      return pages;
+    };
+    const hasFooter = (pageText) => /\/F\d+ 13 Tf/.test(pageText);
+
+    // por defecto: PDF sin las notas del orador
+    let r = await runExport([]);
+    check(r.code === 0, 'export-pdf <archivo.md> termina sin error', r.code === 0 ? '' : r.out);
+    if (r.code === 0 && fs.existsSync(exportOut)) {
       const bytes = fs.readFileSync(exportOut);
       check(bytes.subarray(0, 4).toString() === '%PDF', 'export-pdf <archivo.md> cabecera %PDF');
       try {
@@ -222,6 +281,23 @@ async function testMdDecks(browser) {
         check(doc.getPageCount() === 2, 'export-pdf <archivo.md> nº páginas', `${doc.getPageCount()} vs 2`);
       } catch (e) {
         ko('export-pdf <archivo.md> inspección con pdf-lib', e.message);
+      }
+      try {
+        const pages = await pdfPageTexts();
+        check(!hasFooter(pages[0]), 'export-pdf por defecto omite las notas', hasFooter(pages[0]) ? 'pie presente' : '');
+      } catch (e) {
+        ko('export-pdf default sin notas (extracción de texto)', e.message);
+      }
+    }
+    // --include-notes: las notas sí salen al pie
+    r = await runExport(['--include-notes']);
+    check(r.code === 0, 'export-pdf --include-notes termina sin error', r.code === 0 ? '' : r.out);
+    if (r.code === 0 && fs.existsSync(exportOut)) {
+      try {
+        const pages = await pdfPageTexts();
+        check(hasFooter(pages[0]), 'export-pdf --include-notes imprime las notas', hasFooter(pages[0]) ? '' : 'pie ausente');
+      } catch (e) {
+        ko('export-pdf --include-notes (extracción de texto)', e.message);
       }
     }
   } catch (e) {

@@ -228,7 +228,7 @@ graph TD
 ### Notas del orador
 
 ```markdown
-<!-- notes: Texto para mí. Se ve con N y al exportar a PDF. -->
+<!-- notes: Texto para mí. Se ve con N (panel); el exportador de PDF las omite por defecto (--include-notes). -->
 ```
 
 ## Controles
@@ -319,12 +319,14 @@ npm install                 # instala playwright + pdf-lib
 npx playwright install chromium
 npm run pdf                 # → slides.pdf en la raíz (presentación)
 npm run pdf -- tema1.md     # → tema1.pdf (cualquier .md de la raíz)
+npm run pdf -- tema1.md --include-notes   # mismo PDF con las notas del orador al pie
 npm run pdf -- samples/02-diagrams --out /tmp/diagramas.pdf
 npm run pdf:raster          # modo raster (screenshots PNG, píxel literal)
 ```
 
 * Vector (por defecto): `page.pdf` con `printBackground:true` y `@page 1280×720` — texto y SVG como vectores.
 * Raster (`--raster`): screenshots de cada `.sd-slide` a `1280×720` montados con `pdf-lib` — píxel literal, sin texto seleccionable.
+* Notas del orador: el exportador **las omite por defecto** (PDF limpio). Con `--include-notes` se imprimen al pie de su diapositiva. La impresión rápida del navegador (`P`/`Ctrl+P`) sí las incluye siempre.
 * Requiere el mismo entorno que `npm test` (`framework/environment.yml` → `nodejs=22` vía conda).
 
 ## Desarrollo y verificación
