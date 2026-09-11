@@ -121,7 +121,6 @@
   --sd-slide-height: 720px;     /* Alto de diseño de la diapositiva (16:9) */
   --sd-content-max-h: calc(var(--sd-slide-height) - 2 * var(--sd-slide-padding)); /* Área útil ~592px */
   --sd-img-max-h: 360px;        /* Altura máxima por defecto para imágenes (evita desborde, JS ajusta si aún excede) */
-  --sd-pre-max-h: 320px;        /* Altura máxima para bloques de código */
   --sd-table-max-h: 340px;      /* Altura máxima para tablas */
   --sd-content-scale: 1;        /* Escala auto-fit (JS la modifica si hay overflow) */
 

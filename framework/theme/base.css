@@ -124,8 +124,8 @@ sd-deck { display: block; }
   background: var(--sd-code-bg);
   border-radius: var(--sd-radius);
   overflow: hidden; /* auto-fit evita scroll */
+  flex-shrink: 0;   /* no encoger en el flex column de .sd-content: si no, se recorta */
   line-height: 1.4;
-  max-height: var(--sd-pre-max-h);
   max-width: 100%;
 }
 .sd-slide pre code { background: none; padding: 0; color: var(--sd-fg); font-size: .8em; }

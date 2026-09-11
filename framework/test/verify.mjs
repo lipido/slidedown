@@ -576,11 +576,11 @@ async function inspectSlide(page, idx, total) {
         const r = img.getBoundingClientRect();
         if (r.bottom > sr.bottom + 2 || r.right > sr.right + 2) results.trunc.imgOut = true;
       });
-      // Recorte dentro de columnas: si .sd-cols o .col encogen por flexbox y
-      // recortan su contenido (overflow:hidden), hay truncado aunque el
-      // scrollHeight de .sd-content no lo refleje. Con el fix, el auto-fit
-      // escala todo el contenido y cada columna cabe.
-      s.querySelectorAll('.sd-cols, .sd-cols .col').forEach((el) => {
+      // Recorte dentro de columnas o bloques de código: si .sd-cols/.col encogen
+      // por flexbox (overflow:hidden) o un <pre> se recorta por un max-height,
+      // hay truncado aunque el scrollHeight de .sd-content no lo refleje. Con el
+      // fix, el auto-fit escala todo el contenido y cada columna/código cabe.
+      s.querySelectorAll('.sd-cols, .sd-cols .col, pre').forEach((el) => {
         if (el.scrollHeight > el.clientHeight + 4) results.trunc.colsClip = true;
       });
     }
