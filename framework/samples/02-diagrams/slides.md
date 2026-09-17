@@ -236,4 +236,23 @@ end note
 @enduml
 ```
 
+---
+
+# PlantUML: diagrama de secuencia
+
+Varios diagramas PlantUML en un deck se renderizan en serie (el motor no es reentrante).
+
+```plantuml
+@startuml
+skinparam shadowing false
+actor Usuario
+participant "API" as API
+database "BD" as BD
+Usuario -> API : GET /datos
+API -> BD : SELECT ...
+BD --> API : filas
+API --> Usuario : JSON 200
+@enduml
+```
+
 

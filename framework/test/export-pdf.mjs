@@ -207,14 +207,14 @@ async function exportVector(page, out) {
   // por defecto el PDF sale sin las notas del orador (--include-notes las añade)
   if (!includeNotes) await stripNotes(page);
 
-  // asegurar que todas las imágenes y mermaid de todo el deck están listas
+  // asegurar que todas las imágenes y diagramas (mermaid/plantuml) del deck están listos
   await page.waitForFunction(() => {
-    const ds = document.querySelectorAll('sd-diagram[type="mermaid"]');
+    const ds = document.querySelectorAll('sd-diagram');
     if (ds.length && !Array.from(ds).every((d) => d.dataset.rendered === '1' || !!d.querySelector('.sd-diagram-error'))) return false;
     const imgs = Array.from(document.querySelectorAll('img'));
     if (!imgs.every((i) => i.complete)) return false;
     return true;
-  }, null, { timeout: 20000 }).catch(() => {});
+  }, null, { timeout: 30000 }).catch(() => {});
   await page.waitForTimeout(120);
 
   // page.pdf respeta @page { size:1280px 720px } de print.css

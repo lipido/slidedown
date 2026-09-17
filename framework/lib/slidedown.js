@@ -521,6 +521,20 @@
     }
     return plantumlModuleP;
   }
+  // PlantUML (TeaVM) no es reentrante: varias llamadas concurrentes de
+  // renderToString se pisan y algunas no invocan nunca el callback. Se
+  // serializan encadenándolas en una única promesa.
+  var plantumlQueue = Promise.resolve();
+  function renderPlantumlQueued(mod, code) {
+    var run = function () {
+      return new Promise(function (resolve, reject) {
+        mod.renderToString(code.split('\n'), function (s) { resolve(s); }, function (m) { reject(new Error(m)); });
+      });
+    };
+    var result = plantumlQueue.then(run, run);
+    plantumlQueue = result.catch(function () {});
+    return result;
+  }
   function mermaidThemeVars() {
     var cs = getComputedStyle(document.documentElement);
     function g(n, fb) { return (cs.getPropertyValue(n) || fb).trim(); }
@@ -682,9 +696,7 @@
       var self = this;
       try {
         var mod = await ensurePlantuml();
-        var svg = await new Promise(function (resolve, reject) {
-          mod.renderToString(self._code.split('\n'), function (s) { resolve(s); }, function (m) { reject(new Error(m)); });
-        });
+        var svg = await renderPlantumlQueued(mod, self._code);
         // PlantUML devuelve el error de sintaxis como SVG (no llama a onError).
         if (/Syntax Error|Error line \d+|\[From textarea|An error has occurred/i.test(svg)) {
           throw new Error('PlantUML: error de sintaxis en el diagrama');
