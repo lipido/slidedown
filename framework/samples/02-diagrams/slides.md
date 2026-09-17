@@ -255,4 +255,82 @@ API --> Usuario : JSON 200
 @enduml
 ```
 
+---
+
+# PlantUML: jerarquías con notas (auto-fit)
+
+Diagrama ancho y denso: el auto-fit debe encogerlo para que **todo quepa** (regresión del recorte inferior). Se combinan dos jerarquías en paquetes, dependencias etiquetadas y notas multilínea. Si el ajuste no reduce el zoom lo suficiente, la fila inferior de clases queda por debajo del área útil y se ve recortada.
+
+```plantuml
+@startuml
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam nodesep 35
+skinparam ranksep 55
+hide circle
+
+package "Factorías" {
+  interface AbstractFactory {
+    +createProductA() : ProductA
+    +createProductB() : ProductB
+  }
+  class ConcreteFactory1 {
+    +createProductA() : ProductA
+    +createProductB() : ProductB
+  }
+  class ConcreteFactory2 {
+    +createProductA() : ProductA
+    +createProductB() : ProductB
+  }
+}
+package "Productos" {
+  interface ProductA
+  class ConcreteProductA1
+  class ConcreteProductA2
+  interface ProductB
+  class ConcreteProductB1
+  class ConcreteProductB2
+}
+class Client
+
+AbstractFactory <|.. ConcreteFactory1
+AbstractFactory <|.. ConcreteFactory2
+ProductA <|.. ConcreteProductA1
+ProductA <|.. ConcreteProductA2
+ProductB <|.. ConcreteProductB1
+ProductB <|.. ConcreteProductB2
+ConcreteFactory1 ..> ConcreteProductA1 : <<create>>
+ConcreteFactory1 ..> ConcreteProductB1 : <<create>>
+ConcreteFactory2 ..> ConcreteProductA2 : <<create>>
+ConcreteFactory2 ..> ConcreteProductB2 : <<create>>
+Client ..> AbstractFactory
+Client ..> ProductA
+Client ..> ProductB
+
+Factorías -[hidden]right-> Productos
+Productos -[hidden]up-> Client
+
+note right of AbstractFactory
+  Interfaz para todas las factorías.
+  Define los productos que las
+  factorías deben ser capaces de crear.
+end note
+note bottom of ConcreteFactory1
+  Implementan varias familias
+  de productos.
+end note
+note right of ProductA
+  Familia de productos (muchas
+  veces sólo hay un único miembro).
+end note
+note bottom of Client
+  El cliente está programado contra interfaces.
+  En ejecución recibe una factoría concreta
+  y NO instancia los productos.
+end note
+@enduml
+```
+
+
+
 

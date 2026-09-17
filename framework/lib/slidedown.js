@@ -623,34 +623,44 @@
       var ratio = slide.clientHeight ? (slideRect.height / slide.clientHeight) : 1;
       var contentTop = slideRect.top + padTop * ratio;
       var availScreen = available * ratio;
-      // El reflow del zoom es no lineal (imágenes con max-height, texto que se
-      // re-layouta a saltos de línea), así que el ajuste completo oscila y puede
-      // desbordar. Guardamos el último scale que cabe (best) y solo subimos con
-      // media corrección; al terminar garantizamos un estado seguro.
-      var best = scale;
+      // El reflow del zoom es no lineal (una imagen/SVG a max-width:100% crece en
+      // layout al encoger el zoom), así que el ajuste oscila y puede desbordar.
+      // Invariante: `best` solo se fija con un scale MEDIDO que cabe; si el
+      // inicial no cabe, se reduce y se vuelve a medir; si hay un `best` válido,
+      // se biseca hacia él. Al final se aplica siempre un scale seguro.
+      var best = null;
       applyFit(content, scale);
-      for (var i = 0; i < 12; i++) {
+      for (var i = 0; i < 16; i++) {
         var visual = 0;
         for (var j = 0; j < content.children.length; j++) {
           var b = content.children[j].getBoundingClientRect().bottom - contentTop;
           if (b > visual) visual = b;
         }
         if (visual > availScreen + 2) {
-          // desborda: retroceder hacia el último scale que cabía
-          var back = best + (scale - best) * 0.5;
-          if (Math.abs(back - scale) < 0.002) { scale = best; break; }
-          scale = back;
+          // desborda
+          if (best !== null) {
+            // bisección entre un scale que cabe y el actual que no
+            var back = best + (scale - best) * 0.5;
+            if (Math.abs(back - scale) < 0.002) { scale = best; break; }
+            scale = back;
+          } else {
+            // aún no hay scale seguro: reducir proporcionalmente al desborde
+            var reduce = scale * (availScreen / visual);
+            if (scale - reduce < 0.002) reduce = scale - 0.01;
+            scale = Math.max(0.45, reduce);
+            if (scale <= 0.45) { applyFit(content, scale); break; }
+          }
         } else {
           best = scale;
           if (visual >= availScreen - 3) break; // ya llena el área
-          var target = Math.min(1, scale * (availScreen / visual));
-          var next = scale + (target - scale) * 0.5;
+          var grow = Math.min(1, scale * (availScreen / visual));
+          var next = scale + (grow - scale) * 0.5;
           if (next - scale < 0.003) break;
           scale = next;
         }
         applyFit(content, scale);
       }
-      applyFit(content, best);
+      applyFit(content, best !== null ? best : scale);
     }
   }
   function fitAllSlides(root) {
