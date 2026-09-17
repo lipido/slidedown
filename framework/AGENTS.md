@@ -31,11 +31,11 @@ Guía para agentes que trabajan en slidedown. Léela antes de tocar código.
 
 ## Timing asíncrono (trampa frecuente)
 
-- Las flechas se dibujan al montar, pero las cajas cambian de tamaño al cargar imágenes o renderizar mermaid. Cualquier contenido asíncrono que afecte al tamaño DEBE redibujar las flechas (patrón listener / `redrawSlide`) y re-ajustar (`fitSlide`).
+- Las flechas se dibujan al montar, pero las cajas cambian de tamaño al cargar imágenes o renderizar mermaid/plantuml. Cualquier contenido asíncrono que afecte al tamaño DEBE redibujar las flechas (patrón listener / `redrawSlide`) y re-ajustar (`fitSlide`).
 
 ## "Todo cabe" (regla sagrada)
 
-- Nada se trunca nunca: si el contenido excede el área útil (720 − padding), `fitSlide` escala `.sd-content` con `zoom` (afecta layout; fallback `transform`). Se re-aplica al montar, cargar imágenes, renderizar mermaid, cambiar slide, redimensionar y salir de overview.
+- Nada se trunca nunca: si el contenido excede el área útil (720 − padding), `fitSlide` escala `.sd-content` con `zoom` (afecta layout; fallback `transform`). Se re-aplica al montar, cargar imágenes, renderizar mermaid/plantuml, cambiar slide, redimensionar y salir de overview.
 - La suite verifica visualmente (rects en pantalla) que nada sale de la diapositiva: check "sin truncado (todo cabe)" en `test/verify.mjs`. El sample `samples/05-overflow/` contiene slides diseñadas para desbordar.
 - Trampa de unidades: el marco va escalado (`--sd-scale`); `getBoundingClientRect()` devuelve px de pantalla y `clientHeight/scrollHeight` px de layout. Convertir con `ratio = rect.height / clientHeight` antes de comparar.
 
@@ -54,3 +54,5 @@ Guía para agentes que trabajan en slidedown. Léela antes de tocar código.
 - Bloque de código recortado → **no** poner `max-height` a `pre` y sí `flex-shrink: 0`: `.sd-content` es flex column y un `pre` con `overflow:hidden` se encoge (y recorta) en vez de desbordar; el auto-fit mide `scrollHeight` y necesita ver la altura real para escalar (sample `samples/06-code-long`).
 - Columnas recortando contenido → `.sd-cols` con `flex-shrink: 0` (si no, flexbox encoge el grid y recorta sus columnas con `overflow:hidden` antes de que el auto-fit pueda escalar).
 - Hueco abajo tras escalar → `zoom` reflowea el texto más ancho y el contenido queda más corto que el área útil; `fitSlide` re-mide la altura visual de los hijos y sube el zoom hacia 1 hasta llenar.
+- Nuevo tipo de diagrama (p. ej. `plantuml`) → además del fence y `<sd-diagram type="...">`, `SdDiagram.connectedCallback` filtra por tipo: hay que añadirlo ahí, no solo en `render()`.
+- Error de sintaxis de PlantUML → `renderToString` lo entrega como SVG (no llama a `onError`); hay que detectar el marcador ("Syntax Error") y mostrar `.sd-diagram-error`.

@@ -6,8 +6,8 @@
    <sd-deck><script type="text/slidedown"> ...markdown... </script></sd-deck>
 
    Se apoya en lib/marked.min.js (obligatorio) y, opcionalmente,
-   lib/mermaid.min.js (se carga de forma perezosa solo si hay
-   bloques ```mermaid).
+   lib/mermaid.min.js o lib/plantuml.js (se cargan de forma perezosa
+   solo si hay bloques ```mermaid o ```plantuml).
    ============================================================ */
 (function () {
   'use strict';
@@ -210,6 +210,9 @@
           var lang = (infostring || '').toLowerCase().split(/\s+/)[0];
           if (lang === 'mermaid') {
             return '<sd-diagram type="mermaid">' + esc(code) + '</sd-diagram>\n';
+          }
+          if (lang === 'plantuml') {
+            return '<sd-diagram type="plantuml">' + esc(code) + '</sd-diagram>\n';
           }
           var cls = lang ? ' class="language-' + esc(lang) + '"' : '';
           code = code.replace(/\n$/, '');
@@ -489,6 +492,35 @@
       document.head.appendChild(s);
     });
   }
+  /* ---------------------- plantuml (perezoso) ---------------------- */
+  // @plantuml/core (TeaVM) + viz-global.js (Graphviz/Viz.js), ambos locales.
+  // viz-global.js debe cargarse como script clásico antes de importar el módulo.
+  var plantumlModuleP = null;
+  function ensurePlantuml() {
+    if (!plantumlModuleP) {
+      plantumlModuleP = new Promise(function (resolve, reject) {
+        if (window.Viz) return resolve();
+        var s = document.createElement('script');
+        s.src = LIB_DIR + 'viz-global.js';
+        s.onload = function () { resolve(); };
+        s.onerror = function () { reject(new Error('No se pudo cargar lib/viz-global.js')); };
+        document.head.appendChild(s);
+      }).then(function () {
+        // themes.js registra globalThis.PLANTUML_THEMES (soporte de !theme). Es opcional.
+        return new Promise(function (resolve) {
+          if (window.PLANTUML_THEMES) return resolve();
+          var t = document.createElement('script');
+          t.src = LIB_DIR + 'themes.js';
+          t.onload = function () { resolve(); };
+          t.onerror = function () { resolve(); };
+          document.head.appendChild(t);
+        });
+      }).then(function () {
+        return import(LIB_DIR + 'plantuml.js');
+      });
+    }
+    return plantumlModuleP;
+  }
   function mermaidThemeVars() {
     var cs = getComputedStyle(document.documentElement);
     function g(n, fb) { return (cs.getPropertyValue(n) || fb).trim(); }
@@ -618,11 +650,12 @@
       this._inited = true;
       this.type = this.getAttribute('type') || 'mermaid';
       this._code = (this.textContent || '').trim();
-      if (this.type === 'mermaid') this.render();
+      if (this.type === 'mermaid' || this.type === 'plantuml') this.render();
     }
     async render() {
       if (!this._code) { this.textContent = ''; return; }
       this.textContent = '';
+      if (this.type === 'plantuml') return this.renderPlantuml();
       this.classList.add('sd-diagram--mermaid');
       try {
         var mmd = await ensureMermaid();
@@ -644,6 +677,26 @@
         this._redrawSlide();
       }
     }
+    async renderPlantuml() {
+      this.classList.add('sd-diagram--plantuml');
+      var self = this;
+      try {
+        var mod = await ensurePlantuml();
+        var svg = await new Promise(function (resolve, reject) {
+          mod.renderToString(self._code.split('\n'), function (s) { resolve(s); }, function (m) { reject(new Error(m)); });
+        });
+        // PlantUML devuelve el error de sintaxis como SVG (no llama a onError).
+        if (/Syntax Error|Error line \d+|\[From textarea|An error has occurred/i.test(svg)) {
+          throw new Error('PlantUML: error de sintaxis en el diagrama');
+        }
+        this.innerHTML = svg;
+        this.dataset.rendered = '1';
+        this._redrawSlide();
+      } catch (e) {
+        this.innerHTML = '<pre class="sd-diagram-error">' + esc(e.message || e) + '</pre>';
+        this._redrawSlide();
+      }
+    }
     /* redibuja las flechas de la diapositiva que contiene este diagrama,
        porque el render de mermaid puede cambiar el tamaño de las cajas */
     _redrawSlide() {
@@ -654,6 +707,7 @@
     async refresh() {
       this.innerHTML = '';
       this.classList.remove('sd-diagram--mermaid');
+      this.classList.remove('sd-diagram--plantuml');
       await this.render();
     }
   }

@@ -144,11 +144,11 @@ function serve(p) {
 
 async function waitForSlideReady(page) {
   await page.waitForFunction(() => document.querySelectorAll('.sd-slide').length > 0, null, { timeout: 15000 });
-  // esperar mermaid e imágenes de la slide activa
+  // esperar diagramas (mermaid/plantuml) e imágenes de la slide activa
   await page.waitForFunction(() => {
     const s = document.querySelector('.sd-slide.sd-active');
     if (!s) return true;
-    const ds = s.querySelectorAll('sd-diagram[type="mermaid"]');
+    const ds = s.querySelectorAll('sd-diagram');
     if (ds.length && !Array.from(ds).every((d) => d.dataset.rendered === '1' || !!d.querySelector('.sd-diagram-error'))) return false;
     const imgs = Array.from(s.querySelectorAll('img'));
     if (!imgs.every((i) => i.complete)) return false;

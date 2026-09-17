@@ -60,7 +60,7 @@ slidedown/                 # raíz = UNA o VARIAS presentaciones (lo que editas)
     │   ├── base.css       # Estructura (no tocar para crear temas)
     │   ├── layouts.css    # Layouts y posicionamiento
     │   ├── transitions.css# Transiciones y animaciones
-    │   ├── diagrams.css   # Mermaid + flechas SVG
+    │   ├── diagrams.css   # Mermaid/PlantUML + flechas SVG
     │   ├── print.css      # Export PDF
     │   └── themes/        # Temas: light, dark, blueprint (plantilla)
     ├── samples/           # Decks de ejemplo (documentación funcional)
@@ -225,6 +225,21 @@ graph TD
 
 `lib/mermaid.min.js` se carga solo si hay bloques `mermaid`.
 
+### Diagramas PlantUML
+
+````markdown
+```plantuml
+@startuml
+Alice -> Bob : hello
+@enduml
+```
+````
+
+`lib/plantuml.js` (motor `@plantuml/core`, TeaVM) y `lib/viz-global.js` (Graphviz/Viz.js)
+se cargan solo si hay bloques `plantuml`; `lib/themes.js` aporta los `!theme`. Todo es
+local (funciona sin internet). El estilo se ajusta con `skinparam`/`!theme`, no con los
+tokens `--sd-*` del tema.
+
 ### Notas del orador
 
 ```markdown
@@ -296,7 +311,7 @@ El `id` de una slide es opcional: ponlo solo si quieres hacerle una regla CSS.
 |---|---|
 | `samples/00-layouts` | Todos los layouts, columnas y componentes |
 | `samples/01-transitions` | Transiciones y fragments |
-| `samples/02-diagrams` | Mermaid + infografía con flechas SVG |
+| `samples/02-diagrams` | Mermaid, PlantUML + infografía con flechas SVG |
 | `samples/03-textboxes` | Colocación libre de cajas |
 | `samples/04-notes` | Notas del orador |
 | `samples/05-overflow` | Contenido denso que desborda: el auto-fit escala para que **todo cabe** sin scroll ni truncado |

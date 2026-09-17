@@ -6,9 +6,10 @@ transition: slide
 
 <!-- ============================================================
    SAMPLE 02 — DIAGRAMAS
-   Dos formas:
+   Tres formas:
    1) Mermaid:  ```mermaid ... ```  (diagramas de texto)
-   2) Infografía: cajas posicionadas + flechas SVG con ::: arrow :::.
+   2) PlantUML: ```plantuml ... ``` (UML: clases, secuencia, ...)
+   3) Infografía: cajas posicionadas + flechas SVG con ::: arrow :::.
    ============================================================ -->
 
 # Diagramas con Mermaid
@@ -204,4 +205,35 @@ La operación de datos.
 ::: arrow from=cli to=srv curve=.3 :::
 ::: arrow from=srv to=qry curve=.25 :::
 ::: arrow from=qry to=cli curve=.25 :::
+
+---
+
+# Diagramas con PlantUML
+
+Alternativa a Mermaid, más orientada a UML (clases, secuencia, despliegue...).
+
+```plantuml
+@startuml
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+hide circle
+
+abstract class Forma {
+  {abstract} +area() : double
+}
+class Circulo {
+  +area() : double
+}
+class Cuadrado {
+  +area() : double
+}
+Forma <|-- Circulo
+Forma <|-- Cuadrado
+note right of Forma
+  Cada subclase implementa
+  su propio cálculo de área.
+end note
+@enduml
+```
+
 

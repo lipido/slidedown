@@ -498,10 +498,14 @@ async function inspectSlide(page, idx, total) {
       });
     });
 
-    // --- Mermaid ---
+    // --- Diagramas (Mermaid + PlantUML) ---
     results.mermaid = { count: s.querySelectorAll('sd-diagram[type="mermaid"]').length, ok: true };
     s.querySelectorAll('sd-diagram[type="mermaid"]').forEach((d) => {
       if (!d.querySelector('svg')) results.mermaid.ok = false;
+    });
+    results.plantuml = { count: s.querySelectorAll('sd-diagram[type="plantuml"]').length, ok: true };
+    s.querySelectorAll('sd-diagram[type="plantuml"]').forEach((d) => {
+      if (!d.querySelector('svg')) results.plantuml.ok = false;
     });
 
     // --- Fragments ---
@@ -626,6 +630,7 @@ async function inspectSlide(page, idx, total) {
     }
   }
   check(r.mermaid.ok, name + ' — mermaid renderizado', r.mermaid.count ? `${r.mermaid.count} diagrama(s)` : '');
+  check(r.plantuml.ok, name + ' — plantuml renderizado', r.plantuml.count ? `${r.plantuml.count} diagrama(s)` : '');
   for (const im of r.images) {
     check(im.loaded && !im.broken, name + ' — imagen cargada', im.src || '(sin src)');
     check(!im.overflowX && !im.overflowY, name + ' — imagen sin desborde', im.src || '(sin src)');
@@ -671,12 +676,12 @@ async function run() {
         deck._show(idx, 0, { noAnim: true });
       }, i);
       await page.waitForTimeout(60);
-      // esperar a que cualquier diagrama mermaid de esta diapositiva termine
-      // de renderizarse (render asíncrono) antes de inspeccionar
+      // esperar a que cualquier diagrama (mermaid/plantuml) de esta diapositiva
+      // termine de renderizarse (render asíncrono) antes de inspeccionar
       await page.waitForFunction(() => {
         const s = document.querySelector('.sd-slide.sd-active');
         if (!s) return true;
-        const ds = s.querySelectorAll('sd-diagram[type="mermaid"]');
+        const ds = s.querySelectorAll('sd-diagram');
         if (!ds.length) return true;
         return Array.from(ds).every((d) => d.dataset.rendered === '1' || !!d.querySelector('.sd-diagram-error'));
       }, null, { timeout: 15000 }).catch(() => {});
@@ -739,7 +744,7 @@ async function run() {
       if (d) d._slides.forEach((s) => s.querySelectorAll('.fragment').forEach((f) => f.classList.add('sd-revealed')));
     });
     await pdfPage.waitForFunction(() => {
-      const ds = document.querySelectorAll('sd-diagram[type="mermaid"]');
+      const ds = document.querySelectorAll('sd-diagram');
       if (ds.length && !Array.from(ds).every((d) => d.dataset.rendered === '1' || !!d.querySelector('.sd-diagram-error'))) return false;
       if (!Array.from(document.querySelectorAll('img')).every((i) => i.complete)) return false;
       const codes = document.querySelectorAll('pre code');

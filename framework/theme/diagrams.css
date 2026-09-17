@@ -1,5 +1,5 @@
 /* ==========================================================================
-   SLIDEDOWN — DIAGRAMAS (Mermaid + flechas SVG)
+   SLIDEDOWN — DIAGRAMAS (Mermaid, PlantUML + flechas SVG)
    Los colores de nodos, flechas y texto salen de tokens.css.
    ========================================================================== */
 
@@ -11,6 +11,16 @@
 }
 .sd-diagram svg { max-width: 100%; height: auto; }
 .sd-diagram--mermaid { overflow: visible; }
+
+/* El <svg> es inline por defecto y añade un hueco de línea (baseline) que
+   empuja el diagrama y puede recortarlo por abajo; como bloque, desaparece. */
+.sd-diagram--mermaid svg,
+.sd-diagram--plantuml svg {
+  display: block;
+  margin-inline: auto;
+  max-width: 100%;
+  height: auto;
+}
 .sd-diagram-error {
   color: var(--sd-danger);
   font-family: var(--sd-font-mono);
