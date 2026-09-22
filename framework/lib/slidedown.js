@@ -633,7 +633,12 @@
       for (var i = 0; i < 16; i++) {
         var visual = 0;
         for (var j = 0; j < content.children.length; j++) {
-          var b = content.children[j].getBoundingClientRect().bottom - contentTop;
+          var child = content.children[j];
+          // Los hijos posicionados en absoluto (flechas `::: arrow`, cajas
+          // `pos-*`) son overlays anclados a la diapositiva: su bottom no
+          // depende del zoom, así que no deben contar para el auto-fit.
+          if (getComputedStyle(child).position === 'absolute') continue;
+          var b = child.getBoundingClientRect().bottom - contentTop;
           if (b > visual) visual = b;
         }
         if (visual > availScreen + 2) {

@@ -564,6 +564,9 @@ async function inspectSlide(page, idx, total) {
       // (scale < 1) se exige un mínimo para detectar huecos abajo (ver fitSlide).
       let fill = 0;
       for (const kid of content.children) {
+        // Ignorar overlays absolutos (flechas `::: arrow`, cajas `pos-*`): no
+        // refluyen con el zoom y falsearían el "relleno" del auto-fit.
+        if (getComputedStyle(kid).position === 'absolute') continue;
         const b = (kid.getBoundingClientRect().bottom - sr.top) / ratio - parseFloat(cs.paddingTop);
         if (b > fill) fill = b;
       }

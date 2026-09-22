@@ -109,3 +109,34 @@ Los avisos también funcionan aquí.
 ### Barra inferior
 `pos-20-60 w-60 h-25`
 :::
+
+---
+
+<!-- slide: layout=default -->
+# Auto-fit con overlay absoluto (regresión)
+
+Contenido alto **en flujo** + una **caja posicionada** (hijo absoluto anclado al lienzo). El overlay **no refluye** con el zoom: el auto-fit debe ignorarlo y encoger el texto lo justo para llenar el área, sin quedar diminuto.
+
+- Punto de control 01: mantener el texto legible.
+- Punto de control 02: mantener el texto legible.
+- Punto de control 03: mantener el texto legible.
+- Punto de control 04: mantener el texto legible.
+- Punto de control 05: mantener el texto legible.
+- Punto de control 06: mantener el texto legible.
+- Punto de control 07: mantener el texto legible.
+- Punto de control 08: mantener el texto legible.
+- Punto de control 09: mantener el texto legible.
+- Punto de control 10: mantener el texto legible.
+- Punto de control 11: mantener el texto legible.
+- Punto de control 12: mantener el texto legible.
+- Punto de control 13: mantener el texto legible.
+- Punto de control 14: mantener el texto legible.
+- Punto de control 15: mantener el texto legible.
+- Punto de control 16: mantener el texto legible.
+
+::: textbox id=reg-overlay pos-0-90 w-100
+Caja posicionada (overlay absoluto) anclada abajo.
+:::
+
+Cierre en flujo: el auto-fit debe seguir llenando el área útil.
+
