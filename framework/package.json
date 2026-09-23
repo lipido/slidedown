@@ -9,6 +9,7 @@
     "serve": "node test/serve.mjs",
     "pdf": "node test/export-pdf.mjs",
     "pdf:raster": "node test/export-pdf.mjs --raster",
+    "notes": "node test/export-pdf.mjs --only-notes",
     "gen-assets": "node test/gen-assets.mjs"
   },
   "devDependencies": {

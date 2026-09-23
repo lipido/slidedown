@@ -13,6 +13,12 @@
  *                       con texto seleccionable, réplica fiel de pantalla).
  *   --include-notes     Imprime las notas del orador al pie de su diapositiva.
  *                       Por defecto se omiten (PDF limpio para el alumnado).
+ *   --only-notes        Genera SOLO las notas del orador: título de cada
+ *                       diapositiva + sus notas (las diapositivas sin notas se
+ *                       omiten). No reutiliza el diseño de las slides.
+ *   --format a4|deck    Formato del documento de solo-notas (por defecto a4):
+ *                         a4   → documento A4, títulos como secciones.
+ *                         deck → una página 1280×720 por diapositiva.
  *
  * Requisitos: conda activate slidedown && npm install (playwright + pdf-lib)
  * Genera un PDF de 1280×720 pt por diapositiva (fragmentos todos revelados).
@@ -39,12 +45,16 @@ Uso: node test/export-pdf.mjs [deck|archivo.md] [opciones]
   --out <path>      Ruta de salida del PDF.
   --raster          Modo raster (screenshots PNG). Por defecto: vector (page.pdf).
   --include-notes   Imprime las notas del orador al pie. Por defecto se omiten.
+  --only-notes      Genera solo las notas (título + notas por diapositiva).
+  --format a4|deck  Formato de --only-notes (por defecto a4).
   --port <n>        Puerto del servidor estático (por defecto ${DEFAULT_PORT}).
 
 Ejemplos:
   npm run pdf
   npm run pdf -- tema1.md
   npm run pdf -- tema1.md --include-notes
+  npm run notes
+  npm run notes -- tema1.md --format deck
   npm run pdf -- samples/02-diagrams
   node test/export-pdf.mjs --out /tmp/mi.pdf --raster
 `);
@@ -55,15 +65,23 @@ let deckArg = null;
 let outArg = null;
 let raster = false;
 let includeNotes = false;
+let onlyNotes = false;
+let format = 'a4';
 let port = DEFAULT_PORT;
 for (let i = 0; i < args.length; i++) {
   const a = args[i];
   if (a === '--raster') raster = true;
   else if (a === '--include-notes') includeNotes = true;
+  else if (a === '--only-notes') onlyNotes = true;
+  else if (a === '--format' && args[i + 1]) { format = args[++i]; }
   else if (a === '--out' && args[i + 1]) { outArg = args[++i]; }
   else if (a === '--port' && args[i + 1]) { port = parseInt(args[++i], 10); }
   else if (!a.startsWith('--') && !deckArg) deckArg = a;
   else if (!a.startsWith('--') && !outArg) outArg = a; // compat: segundo posicional como out
+}
+if (format !== 'a4' && format !== 'deck') {
+  console.error(`--format inválido: ${format}. Usa "a4" o "deck".`);
+  process.exit(2);
 }
 
 // ---- resolver deck ----
@@ -114,7 +132,9 @@ function resolveDeck(arg) {
 }
 
 const deck = resolveDeck(deckArg);
-const outPath = outArg ? path.resolve(outArg) : deck.outDefault;
+let outPath = outArg ? path.resolve(outArg) : deck.outDefault;
+// solo-notas: por defecto <deck>-notes.pdf (slides.md -> slides-notes.pdf)
+if (onlyNotes && !outArg) outPath = outPath.replace(/\.pdf$/i, '-notes.pdf');
 
 // ---- servidor estático (igual que verify.mjs) ----
 function serve(p) {
@@ -258,6 +278,74 @@ async function exportRaster(page, out) {
   return total;
 }
 
+// Exporta SOLO las notas del orador: por cada diapositiva con notas, su título
+// (primera cabecera del contenido) y el texto de la nota. Las diapositivas sin
+// notas se omiten. Dos formatos:
+//   a4   → documento A4 con los títulos como secciones (lectura/impresión).
+//   deck → una página 1280×720 por diapositiva.
+async function exportNotes(page, out, fmt) {
+  const url = `http://127.0.0.1:${port}${deck.urlPath}`;
+  console.log(`→ ${deck.name} (solo notas · ${fmt})  ${url}`);
+  await page.goto(url, { waitUntil: 'load' });
+  await page.waitForFunction(() => document.querySelectorAll('.sd-slide').length > 0, null, { timeout: 15000 });
+
+  // extraer título + notas de cada slide (en el navegador, ya renderizado)
+  const data = await page.evaluate(() => {
+    const rank = (tag) => parseInt(tag.replace(/\D/g, ''), 10) || 9;
+    const sections = Array.from(document.querySelectorAll('.sd-slide')).map((s) => {
+      const heads = Array.from(s.querySelectorAll('.sd-content h1, .sd-content h2, .sd-content h3, .sd-content h4'));
+      heads.sort((a, b) => rank(a.tagName) - rank(b.tagName));
+      const title = heads.length ? (heads[0].textContent || '').trim() : '';
+      return { title, notes: (s.dataset.notes || '').trim() };
+    }).filter((x) => x.notes);
+    return { deckTitle: document.title || '', sections };
+  });
+
+  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const deckTitle = data.deckTitle || deck.name;
+  const label = (s, i) => s.title || `Diapositiva ${i + 1}`;
+  const sections = data.sections;
+
+  let css;
+  let body;
+  if (fmt === 'deck') {
+    css = `
+      @page { size: 1280px 720px; margin: 0; }
+      * { box-sizing: border-box; }
+      body { margin: 0; color: #1a1a1a; background: #fff;
+             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+      section { min-height: 720px; padding: 64px 88px; break-after: page;
+                display: flex; flex-direction: column; justify-content: center; }
+      section:last-child { break-after: auto; }
+      h2 { margin: 0 0 28px; font-size: 40px; line-height: 1.15; }
+      .notes { white-space: pre-wrap; font-size: 24px; line-height: 1.5; }`;
+    body = sections.map((s, i) => `<section><h2>${esc(label(s, i))}</h2><div class="notes">${esc(s.notes)}</div></section>`).join('\n');
+  } else {
+    css = `
+      @page { size: A4; }
+      body { color: #1a1a1a; background: #fff;
+             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+      h1 { margin: 0 0 6px; font-size: 22pt; line-height: 1.2; }
+      .deck-title { border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 22px; }
+      section { break-inside: avoid; margin: 0 0 20px; }
+      h2 { margin: 0 0 6px; font-size: 13pt; line-height: 1.25; }
+      .notes { white-space: pre-wrap; font-size: 11pt; line-height: 1.5; }`;
+    body = `<header class="deck-title"><h1>${esc(deckTitle)}</h1></header>\n`
+      + sections.map((s, i) => `<section><h2>${esc(label(s, i))}</h2><div class="notes">${esc(s.notes)}</div></section>`).join('\n');
+  }
+
+  const html = `<!doctype html><html lang="es"><head><meta charset="utf-8">`
+    + `<title>${esc(deckTitle)} — notas</title><style>${css}</style></head><body>${body}</body></html>`;
+
+  await page.setContent(html, { waitUntil: 'load' });
+  const pdfOpts = fmt === 'deck'
+    ? { path: out, preferCSSPageSize: true, printBackground: true, margin: { top: '0', right: '0', bottom: '0', left: '0' } }
+    : { path: out, format: 'A4', printBackground: true, margin: { top: '18mm', right: '18mm', bottom: '18mm', left: '18mm' } };
+  await page.pdf(pdfOpts);
+  console.log(`  PDF solo-notas (${fmt}) escrito: ${out}  (${sections.length} diapositivas con notas)`);
+  return sections.length;
+}
+
 async function main() {
   const server = await serve(port);
   // viewport exacto 1280×720 → --sd-scale = 1, sin escalado
@@ -265,9 +353,13 @@ async function main() {
   const context = await browser.newContext({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1 });
   const page = await context.newPage();
   try {
-    const n = raster ? await exportRaster(page, outPath) : await exportVector(page, outPath);
+    if (onlyNotes) await exportNotes(page, outPath, format);
+    else if (raster) await exportRaster(page, outPath);
+    else await exportVector(page, outPath);
+    const { PDFDocument } = await import('pdf-lib');
+    const doc = await PDFDocument.load(fs.readFileSync(outPath));
     const st = fs.statSync(outPath);
-    console.log(`\nHecho: ${n} páginas, ${(st.size / 1024).toFixed(0)} KB → ${outPath}`);
+    console.log(`\nHecho: ${doc.getPageCount()} páginas, ${(st.size / 1024).toFixed(0)} KB → ${outPath}`);
   } finally {
     await browser.close();
     server.close();

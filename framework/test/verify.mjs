@@ -300,10 +300,59 @@ async function testMdDecks(browser) {
         ko('export-pdf --include-notes (extracción de texto)', e.message);
       }
     }
+
+    // --- solo-notas (--only-notes): A4 (títulos + notas) y deck (1280×720) ---
+    // El .md de prueba tiene 2 slides y solo la primera lleva nota, así que el
+    // documento de solo-notas debe tener UNA sección (la slide sin notas se omite).
+    const notesA4 = path.join(__dirname, 'pdf', 'verify-notes-a4.pdf');
+    const notesDeck = path.join(__dirname, 'pdf', 'verify-notes-deck.pdf');
+    const inspectPdf = async (file) => {
+      const { PDFDocument } = await import('pdf-lib');
+      return PDFDocument.load(fs.readFileSync(file));
+    };
+    r = await runExport(['--only-notes', '--format', 'a4', '--out', notesA4]);
+    check(r.code === 0, 'export-pdf --only-notes --format a4 termina sin error', r.code === 0 ? '' : r.out);
+    if (r.code === 0 && fs.existsSync(notesA4)) {
+      try {
+        const doc = await inspectPdf(notesA4);
+        const pg = doc.getPage(0);
+        check(doc.getPageCount() >= 1, 'notas a4: genera al menos una página', `${doc.getPageCount()}`);
+        check(Math.abs(pg.getWidth() - 595.28) < 3 && Math.abs(pg.getHeight() - 841.89) < 3,
+          'notas a4: tamaño de página A4 (595×842 pt)', `${pg.getWidth().toFixed(0)}×${pg.getHeight().toFixed(0)} pt`);
+      } catch (e) {
+        ko('notas a4 (inspección con pdf-lib)', e.message);
+      }
+    }
+    r = await runExport(['--only-notes', '--format', 'deck', '--out', notesDeck]);
+    check(r.code === 0, 'export-pdf --only-notes --format deck termina sin error', r.code === 0 ? '' : r.out);
+    if (r.code === 0 && fs.existsSync(notesDeck)) {
+      try {
+        const doc = await inspectPdf(notesDeck);
+        const pg = doc.getPage(0);
+        check(doc.getPageCount() === 1, 'notas deck: una página por slide con nota', `${doc.getPageCount()} vs 1`);
+        check(Math.abs(pg.getWidth() - 960) < 1 && Math.abs(pg.getHeight() - 540) < 1,
+          'notas deck: tamaño de página 1280×720 px (960×540 pt)', `${pg.getWidth().toFixed(0)}×${pg.getHeight().toFixed(0)} pt`);
+      } catch (e) {
+        ko('notas deck (inspección con pdf-lib)', e.message);
+      }
+    }
+    // nombre de salida por defecto: <deck>-notes.pdf (sin --out)
+    const notesDefault = path.join(PRESENTATION, '_sd_verify_test-notes.pdf');
+    try { fs.unlinkSync(notesDefault); } catch (e) {}
+    r = await new Promise((resolve) => {
+      const o = [];
+      const proc = spawn(process.execPath, [exportPdf, '_sd_verify_test.md', '--only-notes', '--port', String(port)], { stdio: ['ignore', 'pipe', 'pipe'] });
+      proc.stdout.on('data', (d) => o.push(d));
+      proc.stderr.on('data', (d) => o.push(d));
+      proc.on('close', (code) => resolve({ code, out: o.join('') }));
+    });
+    check(r.code === 0, 'export-pdf --only-notes sin --out termina sin error', r.code === 0 ? '' : r.out);
+    check(fs.existsSync(notesDefault), 'notas: salida por defecto <deck>-notes.pdf', fs.existsSync(notesDefault) ? '' : notesDefault);
   } catch (e) {
     ko('?md= / export-pdf <archivo.md>', e.message);
   } finally {
     try { fs.unlinkSync(testMd); } catch (e) {}
+    try { fs.unlinkSync(path.join(PRESENTATION, '_sd_verify_test-notes.pdf')); } catch (e) {}
     try { if (page) await page.close(); } catch (e) {}
     if (fail > failsBefore) console.log('[?md=]\n' + out.join(''));
   }

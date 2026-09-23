@@ -243,7 +243,7 @@ tokens `--sd-*` del tema.
 ### Notas del orador
 
 ```markdown
-<!-- notes: Texto para mí. Se ve con N (panel); el exportador de PDF las omite por defecto (--include-notes). -->
+<!-- notes: Texto para mí. Se ve con N (panel); el exportador de PDF las omite por defecto (--include-notes las imprime al pie; `npm run notes` genera un guion con solo las notas). -->
 ```
 
 ## Controles
@@ -338,12 +338,31 @@ npm run pdf -- tema1.md     # → tema1.pdf (cualquier .md de la raíz)
 npm run pdf -- tema1.md --include-notes   # mismo PDF con las notas del orador al pie
 npm run pdf -- samples/02-diagrams --out /tmp/diagramas.pdf
 npm run pdf:raster          # modo raster (screenshots PNG, píxel literal)
+npm run notes               # → slides-notes.pdf (solo las notas, A4; ver abajo)
 ```
 
 * Vector (por defecto): `page.pdf` con `printBackground:true` y `@page 1280×720` — texto y SVG como vectores.
 * Raster (`--raster`): screenshots de cada `.sd-slide` a `1280×720` montados con `pdf-lib` — píxel literal, sin texto seleccionable.
 * Notas del orador: el exportador **las omite por defecto** (PDF limpio). Con `--include-notes` se imprimen al pie de su diapositiva. La impresión rápida del navegador (`P`/`Ctrl+P`) sí las incluye siempre.
 * Requiere el mismo entorno que `npm test` (`framework/environment.yml` → `nodejs=22` vía conda).
+
+### Exportar solo las notas (guion del orador)
+
+Genera un documento con **únicamente el título de cada diapositiva y sus notas**
+(las diapositivas sin notas se omiten). Acepta los mismos argumentos que `pdf`
+(un `.md` de la raíz, un `samples/<nombre>`, o nada para `slides.md`):
+
+```bash
+npm run notes                       # → slides-notes.pdf (A4)
+npm run notes -- cidico.md          # → cidico-notes.pdf (A4)
+npm run notes -- cidico.md --format deck   # una página 1280×720 por diapositiva
+npm run notes -- cidico.md --out /tmp/guion.pdf
+npm run pdf -- cidico.md --only-notes      # equivalente
+```
+
+* `--format a4` (por defecto): documento A4 con los títulos como secciones y las notas como texto, en flujo continuo (para leer o imprimir el guion).
+* `--format deck`: una página 1280×720 por diapositiva, con el título y las notas como contenido.
+* La salida por defecto es `<deck>-notes.pdf`; `--out` la cambia.
 
 ## Desarrollo y verificación
 
