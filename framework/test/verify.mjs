@@ -358,6 +358,124 @@ async function testMdDecks(browser) {
   }
 }
 
+/* ---- verificación de --split-on-fragment ----
+   Deck temporal con 2 fragmentos inline en la 1ª diapositiva (y una nota),
+   una diapositiva sin fragmentos y otra con dos bloques ::: fragment.
+   Con el flag: (2+1) + 1 + (2+1) = 7 páginas; sin el flag: 3 (una por
+   diapositiva). Comprueba también que las notas se repiten en cada página
+   de la diapositiva partida (vector) y que el modo raster también parte. */
+async function testSplitOnFragment(browser) {
+  const testMd = path.join(PRESENTATION, '_sd_verify_split.md');
+  const mdContent = `---
+title: Prueba split
+---
+
+<!-- notes: NOTA_SPLIT_XYZ -->
+# Split
+
+- Uno {fragment}
+- Dos {fragment}
+
+---
+
+## Sin fragmentos
+
+---
+
+## Bloques
+
+::: fragment
+Bloque A
+:::
+
+::: fragment
+Bloque B
+:::
+`;
+  const outDefault = path.join(__dirname, 'pdf', 'verify-split-default.pdf');
+  const outSplit = path.join(__dirname, 'pdf', 'verify-split-notes.pdf');
+  const outRaster = path.join(__dirname, 'pdf', 'verify-split-raster.pdf');
+  fs.writeFileSync(testMd, mdContent);
+  const failsBefore = fail;
+  const out = [];
+  try {
+    const port = await freePort();
+    const exportPdf = path.join(FRAMEWORK, 'test', 'export-pdf.mjs');
+    const run = (extraArgs) => new Promise((resolve) => {
+      const o = [];
+      const proc = spawn(process.execPath, [exportPdf, '_sd_verify_split.md', '--port', String(port), ...extraArgs], { stdio: ['ignore', 'pipe', 'pipe'] });
+      proc.stdout.on('data', (d) => { out.push(d); o.push(d); });
+      proc.stderr.on('data', (d) => { out.push(d); o.push(d); });
+      proc.on('close', (code) => resolve({ code, out: o.join('') }));
+    });
+    const loadPdf = async (file) => {
+      const { PDFDocument } = await import('pdf-lib');
+      return PDFDocument.load(fs.readFileSync(file));
+    };
+    // texto de los content streams (fuentes subset: no se puede buscar literal;
+    // el pie de notas se detecta por su run de 13 Tf, igual que en testMdDecks)
+    const pdfPageTexts = async (file) => {
+      const zlib = await import('node:zlib');
+      const doc = await loadPdf(file);
+      const pages = [];
+      for (const pg of doc.getPages()) {
+        const contents = pg.node.Contents();
+        const streams = [];
+        if (contents && typeof contents.size === 'function') {
+          for (let i = 0; i < contents.size(); i++) streams.push(contents.get(i));
+        } else if (contents) streams.push(contents);
+        let text = '';
+        for (const s of streams) {
+          if (s && typeof s.getContents === 'function') {
+            let raw = s.getContents();
+            try { raw = zlib.inflateSync(raw); } catch (e) {}
+            text += Buffer.from(raw).toString('latin1');
+          }
+        }
+        pages.push(text);
+      }
+      return pages;
+    };
+    const hasFooter = (pageText) => /\/F\d+ 13 Tf/.test(pageText);
+
+    // 1) sin flag: comportamiento anterior, una página por diapositiva
+    let r = await run(['--out', outDefault]);
+    check(r.code === 0, 'split: export sin flag termina sin error', r.code === 0 ? '' : r.out);
+    if (r.code === 0) {
+      const doc = await loadPdf(outDefault);
+      check(doc.getPageCount() === 3, 'split: sin flag una página por diapositiva', `${doc.getPageCount()} vs 3`);
+    }
+
+    // 2) con flag (+ notas): 7 páginas; la nota se repite en las 3 primeras
+    r = await run(['--split-on-fragment', '--include-notes', '--out', outSplit]);
+    check(r.code === 0, 'split: export con --split-on-fragment termina sin error', r.code === 0 ? '' : r.out);
+    if (r.code === 0) {
+      const doc = await loadPdf(outSplit);
+      check(doc.getPageCount() === 7, 'split: 7 páginas (3+1+3)', `${doc.getPageCount()} vs 7`);
+      const pages = await pdfPageTexts(outSplit);
+      check(
+        hasFooter(pages[0]) && hasFooter(pages[1]) && hasFooter(pages[2]),
+        'split: la nota se repite en todas las páginas de su diapositiva',
+        pages.slice(0, 3).map((p) => (hasFooter(p) ? '1' : '0')).join('')
+      );
+      check(!hasFooter(pages[3]), 'split: la diapositiva siguiente no hereda la nota');
+    }
+
+    // 3) raster + flag: también parte en 7 capturas
+    r = await run(['--raster', '--split-on-fragment', '--out', outRaster]);
+    check(r.code === 0, 'split: export raster con --split-on-fragment termina sin error', r.code === 0 ? '' : r.out);
+    if (r.code === 0) {
+      const doc = await loadPdf(outRaster);
+      check(doc.getPageCount() === 7, 'split: raster genera 7 páginas', `${doc.getPageCount()} vs 7`);
+    }
+  } catch (e) {
+    ko('split por fragmentos', e.message);
+  } finally {
+    try { fs.unlinkSync(testMd); } catch (e) {}
+    if (fail > failsBefore) console.log('[split]\n' + out.join(''));
+  }
+}
+
 function findDecks() {
   const decks = [];
   // presentación raíz (slides.md + index.html del proyecto)
@@ -781,6 +899,10 @@ async function run() {
   // ---- verificación de varias presentaciones .md en la raíz (?md=) ----
   console.log('\n=== Varias presentaciones .md en la raíz (?md=) ===');
   await testMdDecks(browser);
+
+  // ---- verificación del export con --split-on-fragment ----
+  console.log('\n=== Export PDF con --split-on-fragment ===');
+  await testSplitOnFragment(browser);
 
   // ---- verificación PDF vector (pixel-perfect con texto) ----
   console.log('\n=== PDF export (vector) ===');

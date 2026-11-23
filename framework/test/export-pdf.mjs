@@ -19,6 +19,10 @@
  *   --format a4|deck    Formato del documento de solo-notas (por defecto a4):
  *                         a4   → documento A4, títulos como secciones.
  *                         deck → una página 1280×720 por diapositiva.
+ *   --split-on-fragment  Exporta una página por paso de fragmento: estado
+ *                       inicial + cada revelado. Sin el flag, todo el
+ *                       contenido va en una sola página (comportamiento
+ *                       anterior). No aplica a --only-notes.
  *
  * Requisitos: conda activate slidedown && npm install (playwright + pdf-lib)
  * Genera un PDF de 1280×720 pt por diapositiva (fragmentos todos revelados).
@@ -47,12 +51,15 @@ Uso: node test/export-pdf.mjs [deck|archivo.md] [opciones]
   --include-notes   Imprime las notas del orador al pie. Por defecto se omiten.
   --only-notes      Genera solo las notas (título + notas por diapositiva).
   --format a4|deck  Formato de --only-notes (por defecto a4).
+  --split-on-fragment  Una página por paso de fragmento (estado inicial +
+                    cada revelado). Por defecto: todo en una página.
   --port <n>        Puerto del servidor estático (por defecto ${DEFAULT_PORT}).
 
 Ejemplos:
   npm run pdf
   npm run pdf -- tema1.md
   npm run pdf -- tema1.md --include-notes
+  npm run pdf -- tema1.md --split-on-fragment
   npm run notes
   npm run notes -- tema1.md --format deck
   npm run pdf -- samples/02-diagrams
@@ -66,6 +73,7 @@ let outArg = null;
 let raster = false;
 let includeNotes = false;
 let onlyNotes = false;
+let splitOnFragment = false;
 let format = 'a4';
 let port = DEFAULT_PORT;
 for (let i = 0; i < args.length; i++) {
@@ -73,6 +81,7 @@ for (let i = 0; i < args.length; i++) {
   if (a === '--raster') raster = true;
   else if (a === '--include-notes') includeNotes = true;
   else if (a === '--only-notes') onlyNotes = true;
+  else if (a === '--split-on-fragment') splitOnFragment = true;
   else if (a === '--format' && args[i + 1]) { format = args[++i]; }
   else if (a === '--out' && args[i + 1]) { outArg = args[++i]; }
   else if (a === '--port' && args[i + 1]) { port = parseInt(args[++i], 10); }
@@ -177,19 +186,73 @@ async function waitForSlideReady(page) {
   await page.waitForTimeout(80);
 }
 
-async function prepareSlide(page, idx) {
-  await page.evaluate((i) => {
+async function prepareSlide(page, idx, fragIndex) {
+  await page.evaluate(({ i, frag }) => {
     const d = document.querySelector('sd-deck');
     // _show con noAnim deja solo la slide activa visible, sin z-index de leaving
     d._show(i, 0, { noAnim: true });
-    // revelar todos los fragmentos (PDF estático = estado final)
+    // fragIndex null → revelar todos (PDF estático = estado final);
+    // si es un número → solo hasta ese índice (-1 = estado inicial).
     const total = d._fragStats[i] || 0;
-    if (total > 0) {
-      d._fragIndex = total;
-      d._applyFragments(d._slides[i]);
-    }
-  }, idx);
+    d._fragIndex = frag === null ? total : frag;
+    d._applyFragments(d._slides[i]);
+  }, { i: idx, frag: fragIndex === undefined ? null : fragIndex });
   await waitForSlideReady(page);
+}
+
+/* ---- --split-on-fragment: una página por paso de revelado ----------------
+   Clona cada diapositiva con fragmentos en N+1 secciones (estado inicial +
+   una por fragmento). Los clones llevan .sd-revealed solo hasta su paso y
+   print.css se sobreescribe para ocultar los no revelados. El hueco del
+   fragmento oculto se conserva (igual que en pantalla), así que la geometría
+   no cambia entre pasos. Debe ejecutarse DESPUÉS de renderizar diagramas e
+   imágenes: un <sd-diagram> sin renderizar copiado al clon ya no se
+   renderizaría (marcamos _inited para evitar el re-render). */
+async function splitFragments(page) {
+  const info = await page.evaluate(() => {
+    const slides = Array.from(document.querySelectorAll('.sd-slide'));
+    let pages = 0;
+    let splitSlides = 0;
+    slides.forEach((slide) => {
+      const frags = Array.from(slide.querySelectorAll('.fragment'));
+      const steps = frags.length + 1;
+      if (frags.length) splitSlides++;
+      const parent = slide.parentNode;
+      for (let k = 0; k < steps; k++) {
+        const clone = slide.cloneNode(true);
+        clone.classList.add('sd-split-step');
+        clone.dataset.splitStep = String(k);
+        // _inited no se copia con cloneNode; sin esto connectedCallback
+        // volvería a renderizar el diagrama (leyendo el texto del SVG).
+        clone.querySelectorAll('sd-diagram').forEach((d) => { d._inited = true; });
+        const cf = Array.from(clone.querySelectorAll('.fragment'));
+        cf.forEach((f, i) => f.classList.toggle('sd-revealed', i < k));
+        parent.insertBefore(clone, slide);
+      }
+      parent.removeChild(slide);
+      pages += steps;
+    });
+    const st = document.createElement('style');
+    st.id = 'sd-split-fragments-style';
+    st.textContent = '@media print {' +
+      '.sd-slide .fragment { transition: none !important; animation: none !important; }' +
+      '.sd-slide .fragment:not(.sd-revealed) { opacity: 0 !important; }' +
+      '}';
+    document.head.appendChild(st);
+    return { slides: slides.length, splitSlides, pages };
+  });
+  return info;
+}
+
+/* Espera a que diagramas e imágenes de todo el deck estén listos. */
+async function waitForAsyncContent(page) {
+  await page.waitForFunction(() => {
+    const ds = document.querySelectorAll('sd-diagram');
+    if (ds.length && !Array.from(ds).every((d) => d.dataset.rendered === '1' || !!d.querySelector('.sd-diagram-error'))) return false;
+    const imgs = Array.from(document.querySelectorAll('img'));
+    if (!imgs.every((i) => i.complete)) return false;
+    return true;
+  }, null, { timeout: 30000 }).catch(() => {});
 }
 
 // Sin --include-notes las notas del orador (data-notes) se eliminan del DOM:
@@ -207,34 +270,40 @@ async function exportVector(page, out) {
   await page.waitForFunction(() => document.querySelectorAll('.sd-slide').length > 0, null, { timeout: 15000 });
 
   const total = await page.evaluate(() => document.querySelectorAll('.sd-slide').length);
-  console.log(`  ${total} diapositivas, preparando (fragmentos revelados)...`);
-  // activar la primera para que el DOM esté listo, luego recorrer todas revelando
-  // fragmentos antes de imprimir. page.pdf pagina según print.css (break-after:page),
-  // así que basta con revelar todas a la vez vía JS en la página.
-  await page.evaluate(() => {
-    const d = document.querySelector('sd-deck');
-    if (!d) return;
-    // revelar todos los fragmentos de todas las slides para el print
-    d._slides.forEach((s, i) => {
-      const tot = d._fragStats[i] || 0;
-      if (tot > 0) {
-        // simular que esa slide estuvo activa con todos revelados: marcar .sd-revealed
-        s.querySelectorAll('.fragment').forEach((f) => f.classList.add('sd-revealed'));
-      }
+
+  // esperar diagramas/imágenes ANTES de clonar: un diagrama sin renderizar
+  // copiado al clon ya no se renderizaría (_inited evita el re-render).
+  await waitForAsyncContent(page);
+
+  let pages = total;
+  if (splitOnFragment) {
+    const info = await splitFragments(page);
+    pages = info.pages;
+    console.log(`  ${total} diapositivas → ${pages} páginas (split por fragmentos en ${info.splitSlides})`);
+    // los clones vuelven a cargar sus <img>: esperar de nuevo
+    await waitForAsyncContent(page);
+  } else {
+    console.log(`  ${total} diapositivas, preparando (fragmentos revelados)...`);
+    // activar la primera para que el DOM esté listo, luego recorrer todas revelando
+    // fragmentos antes de imprimir. page.pdf pagina según print.css (break-after:page),
+    // así que basta con revelar todas a la vez vía JS en la página.
+    await page.evaluate(() => {
+      const d = document.querySelector('sd-deck');
+      if (!d) return;
+      // revelar todos los fragmentos de todas las slides para el print
+      d._slides.forEach((s, i) => {
+        const tot = d._fragStats[i] || 0;
+        if (tot > 0) {
+          // simular que esa slide estuvo activa con todos revelados: marcar .sd-revealed
+          s.querySelectorAll('.fragment').forEach((f) => f.classList.add('sd-revealed'));
+        }
+      });
     });
-  });
+  }
 
   // por defecto el PDF sale sin las notas del orador (--include-notes las añade)
   if (!includeNotes) await stripNotes(page);
 
-  // asegurar que todas las imágenes y diagramas (mermaid/plantuml) del deck están listos
-  await page.waitForFunction(() => {
-    const ds = document.querySelectorAll('sd-diagram');
-    if (ds.length && !Array.from(ds).every((d) => d.dataset.rendered === '1' || !!d.querySelector('.sd-diagram-error'))) return false;
-    const imgs = Array.from(document.querySelectorAll('img'));
-    if (!imgs.every((i) => i.complete)) return false;
-    return true;
-  }, null, { timeout: 30000 }).catch(() => {});
   await page.waitForTimeout(120);
 
   // page.pdf respeta @page { size:1280px 720px } de print.css
@@ -247,7 +316,7 @@ async function exportVector(page, out) {
     margin: { top: '0', right: '0', bottom: '0', left: '0' },
   });
   console.log(`  PDF vector escrito: ${out}`);
-  return total;
+  return pages;
 }
 
 async function exportRaster(page, out) {
@@ -257,25 +326,42 @@ async function exportRaster(page, out) {
   await page.goto(url, { waitUntil: 'load' });
   await page.waitForFunction(() => document.querySelectorAll('.sd-slide').length > 0, null, { timeout: 15000 });
   const total = await page.evaluate(() => document.querySelectorAll('.sd-slide').length);
-  console.log(`  ${total} diapositivas, capturando a 1280×720...`);
+  // pasos por diapositiva: 1, o N+1 con --split-on-fragment
+  const fragCounts = await page.evaluate(() => Array.from(document.querySelectorAll('.sd-slide'))
+    .map((s) => s.querySelectorAll('.fragment').length));
+  const steps = fragCounts.map((n) => (splitOnFragment ? n + 1 : 1));
+  const totalPages = steps.reduce((a, b) => a + b, 0);
+  if (splitOnFragment) {
+    // sin transición de opacity: la captura debe coger el estado final del paso
+    await page.addStyleTag({ content: '.sd-slide .fragment { transition: none !important; animation: none !important; }' });
+    const splitSlides = fragCounts.filter((n) => n > 0).length;
+    console.log(`  ${total} diapositivas → ${totalPages} capturas (split por fragmentos en ${splitSlides})`);
+  } else {
+    console.log(`  ${total} diapositivas, capturando a 1280×720...`);
+  }
 
   if (!includeNotes) await stripNotes(page);
 
   const pdfDoc = await PDFDocument.create();
+  let n = 0;
   for (let i = 0; i < total; i++) {
-    await prepareSlide(page, i);
-    const slide = page.locator(`.sd-slide[data-idx="${i}"]`);
-    const png = await slide.screenshot({ type: 'png' });
-    const img = await pdfDoc.embedPng(png);
-    const pg = pdfDoc.addPage([1280, 720]);
-    pg.drawImage(img, { x: 0, y: 0, width: 1280, height: 720 });
-    console.log(`    [${i + 1}/${total}] capturada`);
+    for (let k = 0; k < steps[i]; k++) {
+      // fragIndex: null = revelar todo; con split, k-1 (-1 = estado inicial)
+      await prepareSlide(page, i, splitOnFragment ? k - 1 : null);
+      const slide = page.locator(`.sd-slide[data-idx="${i}"]`);
+      const png = await slide.screenshot({ type: 'png' });
+      const img = await pdfDoc.embedPng(png);
+      const pg = pdfDoc.addPage([1280, 720]);
+      pg.drawImage(img, { x: 0, y: 0, width: 1280, height: 720 });
+      n++;
+      console.log(`    [${n}/${totalPages}] capturada`);
+    }
   }
   const bytes = await pdfDoc.save();
   fs.mkdirSync(path.dirname(out), { recursive: true });
   fs.writeFileSync(out, bytes);
   console.log(`  PDF raster escrito: ${out}`);
-  return total;
+  return totalPages;
 }
 
 // Exporta SOLO las notas del orador: por cada diapositiva con notas, su título
