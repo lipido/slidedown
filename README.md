@@ -336,6 +336,7 @@ npx playwright install chromium
 npm run pdf                 # → slides.pdf en la raíz (presentación)
 npm run pdf -- tema1.md     # → tema1.pdf (cualquier .md de la raíz)
 npm run pdf -- tema1.md --include-notes   # mismo PDF con las notas del orador al pie
+npm run pdf -- tema1.md --split-on-fragment  # una página por paso de fragmento
 npm run pdf -- samples/02-diagrams --out /tmp/diagramas.pdf
 npm run pdf:raster          # modo raster (screenshots PNG, píxel literal)
 npm run notes               # → slides-notes.pdf (solo las notas, A4; ver abajo)
@@ -343,8 +344,30 @@ npm run notes               # → slides-notes.pdf (solo las notas, A4; ver abaj
 
 * Vector (por defecto): `page.pdf` con `printBackground:true` y `@page 1280×720` — texto y SVG como vectores.
 * Raster (`--raster`): screenshots de cada `.sd-slide` a `1280×720` montados con `pdf-lib` — píxel literal, sin texto seleccionable.
+* Fragmentos: por defecto **todo el contenido va en una sola página**. Con `--split-on-fragment` se exporta una página por paso de revelado: el estado inicial y cada fragmento revelado (ver abajo).
 * Notas del orador: el exportador **las omite por defecto** (PDF limpio). Con `--include-notes` se imprimen al pie de su diapositiva. La impresión rápida del navegador (`P`/`Ctrl+P`) sí las incluye siempre.
 * Requiere el mismo entorno que `npm test` (`framework/environment.yml` → `nodejs=22` vía conda).
+
+### Exportar una página por fragmento (`--split-on-fragment`)
+
+Con `--split-on-fragment`, una diapositiva con N fragmentos genera **N+1 páginas**:
+la primera es el estado inicial (ningún fragmento revelado) y después una
+página por cada revelado, en el mismo orden que al pulsar `→`. Las
+diapositivas sin fragmentos siguen generando una sola página.
+
+```bash
+npm run pdf -- tema1.md --split-on-fragment
+npm run pdf -- tema1.md --split-on-fragment --include-notes
+npm run pdf:raster -- --split-on-fragment   # también en modo raster
+```
+
+* Aplica a cualquier fragmento: bloques `::: fragment :::` y `{fragment}` en
+  párrafos, títulos, citas o elementos de lista.
+* Con `--include-notes` la nota se repite al pie en **todas** las páginas de
+  la diapositiva partida (en raster las notas no se imprimen: son capturas de
+  pantalla).
+* Sin el parámetro el comportamiento no cambia (una página por diapositiva).
+* No aplica a `--only-notes` (el guion no depende de los fragmentos).
 
 ### Exportar solo las notas (guion del orador)
 
